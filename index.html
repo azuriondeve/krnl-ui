@@ -164,6 +164,14 @@
         ];
         let activeTabId = JSON.parse(localStorage.getItem('krnl_active_tab')) || tabs[0].id;
 
+// SHORTCUTS
+        
+        const shortcutMap = {
+            '_G.IY()': 'loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()',
+            '_G.Dex()': 'loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()',
+            '_G.Fly()': 'loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiRoblox/master/FlyGui.lua"))()'
+        };
+        
         // Carregar Atalhos
         async function loadShortcuts() {
             try {
@@ -211,14 +219,22 @@
 
         function translateScript(input) {
             let finalScript = input.trim();
+        
+            // Atalhos locais (_G.IY, _G.Dex, etc)
+            if (shortcutMap[finalScript]) {
+                return shortcutMap[finalScript];
+            }
+        
+            // Atalhos carregados do JSON
             shortcuts.forEach(item => {
                 if (finalScript === item.textbox) {
                     finalScript = item.load;
                 }
             });
+        
             return finalScript;
         }
-
+        
         function executeScript() {
             const rawCode = editor.getValue();
             const translatedCode = translateScript(rawCode);
