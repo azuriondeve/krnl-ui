@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Azurion UI - Executor Pro</title>
+    <title>executor-krnl</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -22,189 +22,150 @@
         
         .bg-editor-main { background-color: #1a1a1a; }
         .bg-header { background-color: #252526; }
-        .bg-tab-active { background-color: #1a1a1a; }
-        .bg-tab-inactive { background-color: #2d2d2d; }
+        .bg-tab-active { background-color: #1a1a1a; border-top: 2px solid #007acc; }
+        .bg-tab-inactive { background-color: #2d2d2d; opacity: 0.6; }
         
-        .border-accent { 
-            border-top: 2px solid #007acc; 
-            animation: borderSlide 0.4s ease-out;
-        }
-
-        @keyframes borderSlide {
-            from { width: 0; opacity: 0; }
-            to { width: 100%; opacity: 1; }
-        }
-
         ::-webkit-scrollbar { height: 3px; width: 6px; }
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #007acc; }
 
-        #container { 
-            width: 100%; 
-            height: 100%; 
-            transition: opacity 0.2s ease;
-        }
-
         .icon-btn { 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            transition: all 0.2s ease; 
             cursor: pointer; 
-            opacity: 0.7; 
-            outline: none;
         }
         .icon-btn:hover { 
-            opacity: 1; 
             background: rgba(255,255,255,0.08); 
-            transform: scale(1.05);
-        }
-        .icon-btn:active { transform: scale(0.95); }
-
-        .tab { 
-            min-width: 140px; 
-            max-width: 200px; 
-            flex-shrink: 0; 
-            user-select: none; 
-            position: relative;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: slideInTab 0.3s ease-out;
+            color: #fff;
         }
 
-        @keyframes slideInTab {
-            from { transform: translateY(-5px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        #tabs-container {
-            display: flex;
-            height: 100%;
-            overflow-x: auto;
-            scroll-behavior: smooth;
-        }
-        #tabs-container::-webkit-scrollbar { display: none; }
-
-        .tab-rename-input {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid #007acc;
-            color: white;
-            outline: none;
-            width: 100%;
-            font-size: 11px;
-            padding: 1px 4px;
-            border-radius: 2px;
-        }
-
-        #home-overlay {
-            position: absolute;
-            top: 36px; 
-            left: 0;
-            width: 100%;
-            height: calc(100% - 36px);
-            background: rgba(15, 15, 15, 0.96);
-            z-index: 100; 
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(12px);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Resizers */
+        /* Áreas de Resize para bater com o C# */
         .resizer { position: absolute; z-index: 9999; }
-        .resizer.right { top: 0; right: 0; width: 4px; height: 100%; cursor: e-resize; }
-        .resizer.left { top: 0; left: 0; width: 4px; height: 100%; cursor: w-resize; }
-        .resizer.bottom { bottom: 0; left: 0; width: 100%; height: 4px; cursor: s-resize; }
         .resizer.top { top: 0; left: 0; width: 100%; height: 4px; cursor: n-resize; }
+        .resizer.bottom { bottom: 0; left: 0; width: 100%; height: 4px; cursor: s-resize; }
+        .resizer.left { top: 0; left: 0; width: 4px; height: 100%; cursor: w-resize; }
+        .resizer.right { top: 0; right: 0; width: 4px; height: 100%; cursor: e-resize; }
+        .resizer.top-left { top: 0; left: 0; width: 10px; height: 10px; cursor: nw-resize; }
+        .resizer.top-right { top: 0; right: 0; width: 10px; height: 10px; cursor: ne-resize; }
+        .resizer.bottom-left { bottom: 0; left: 0; width: 10px; height: 10px; cursor: sw-resize; }
+        .resizer.bottom-right { bottom: 0; right: 0; width: 10px; height: 10px; cursor: se-resize; }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 45px;
+            background: #252526;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+            z-index: 1000;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+        .dropdown-content button {
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #ccc;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        .dropdown-content button:hover {
+            background: #3e3e42;
+            color: white;
+        }
     </style>
 </head>
 <body onmousedown="checkDrag(event)">
 
-    <!-- Resize Handles -->
+    <!-- Handles de Redimensionamento -->
     <div class="resizer top" onmousedown="handleResize(event, 'top')"></div>
     <div class="resizer bottom" onmousedown="handleResize(event, 'bottom')"></div>
     <div class="resizer left" onmousedown="handleResize(event, 'left')"></div>
     <div class="resizer right" onmousedown="handleResize(event, 'right')"></div>
+    <div class="resizer top-left" onmousedown="handleResize(event, 'top-left')"></div>
+    <div class="resizer top-right" onmousedown="handleResize(event, 'top-right')"></div>
+    <div class="resizer bottom-left" onmousedown="handleResize(event, 'bottom-left')"></div>
+    <div class="resizer bottom-right" onmousedown="handleResize(event, 'bottom-right')"></div>
 
-    <!-- Interface Home Overlay -->
-    <div id="home-overlay" onclick="toggleHome()">
-        <div class="text-center animate__animated animate__zoomIn">
-            <h1 class="text-3xl font-light text-gray-300 tracking-widest mb-2">
-                KRNL <span class="text-blue-500 font-semibold">AZURION</span>
-            </h1>
-            <p class="text-gray-500 text-sm uppercase tracking-tighter">Premium UI Theme</p>
-        </div>
-        
-        <div class="absolute bottom-8 text-[10px] tracking-widest text-gray-600 uppercase select-none">
-            Click anywhere to return
-        </div>
-    </div>
-
-    <!-- Header / Barra de Abas -->
-    <header class="bg-header h-9 flex items-center justify-between select-none border-b border-black/40 z-50 relative">
+    <!-- Barra de Título / Abas -->
+    <header class="bg-header h-9 flex items-center justify-between select-none border-b border-black/40">
         <div class="flex items-center h-full overflow-hidden flex-1">
-            <div onclick="toggleHome()" class="px-3 h-full flex items-center icon-btn flex-shrink-0" title="Home">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400">
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                </svg>
+            <div class="px-3 h-full flex items-center text-blue-500 font-bold text-xs tracking-widest">
+                AZURION
             </div>
             
-            <div id="tabs-container"></div>
+            <div id="tabs-container" class="flex h-full items-center"></div>
 
-            <div onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5 flex-shrink-0">
-                <span class="text-lg font-light">+</span>
+            <div onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5 transition-colors">
+                <span class="text-lg">+</span>
             </div>
         </div>
 
+        <!-- Botões de Controle (Mapeados para seu C#) -->
         <div class="flex items-center h-full flex-shrink-0">
-            <div onclick="windowAction('minimize')" class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400">
+            <div onclick="windowAction('minimize')" class="px-4 h-full flex items-center hover:bg-white/10 cursor-pointer text-gray-400">
                 <div class="w-3 h-[1px] bg-current"></div>
             </div>
-            <div onclick="windowAction('maximize')" class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400">
+            <div onclick="windowAction('maximize')" class="px-4 h-full flex items-center hover:bg-white/10 cursor-pointer text-gray-400">
                 <div class="w-3 h-3 border border-current"></div>
             </div>
-            <div onclick="windowAction('close')" class="px-4 h-full flex items-center hover:bg-red-600 cursor-pointer text-gray-400 hover:text-white">
+            <div onclick="windowAction('close')" class="px-4 h-full flex items-center hover:bg-red-600 cursor-pointer text-gray-400 hover:text-white transition-all">
                 <span class="text-sm">✕</span>
             </div>
         </div>
     </header>
 
-    <!-- Toolbar -->
-    <div class="bg-editor-main h-11 flex items-center justify-between px-3 border-b border-black/20 relative">
+    <!-- Barra de Ações -->
+    <div class="bg-editor-main h-11 flex items-center justify-between px-3 border-b border-black/20">
         <div class="flex items-center space-x-2">
-            <div onclick="attachProcess()" class="p-2 icon-btn rounded text-gray-400 hover:text-blue-400" title="Attach (Injetar)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m18 2 4 4"></path>
-                    <path d="m17 7 3-3"></path>
-                    <path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"></path>
-                    <path d="m9 11 4 4"></path>
-                    <path d="m5 19-3 3"></path>
-                    <path d="m14 4 6 6"></path>
-                </svg>
-            </div>
-            <div onclick="clearEditor()" class="p-2 icon-btn rounded text-gray-400 hover:text-yellow-500" title="Clear Editor">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
-            </div>
+            <button onclick="attachProcess()" class="flex items-center space-x-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-3 py-1 rounded text-xs border border-blue-500/30 transition-all">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 2 4 4m-5 1 3-3M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5m-6 6 4 4m-8 8-3 3m12-18 6 6"/></svg>
+                <span>ATTACH</span>
+            </button>
+
+            <button onclick="executeScript()" class="flex items-center space-x-2 bg-green-600/20 hover:bg-green-600/40 text-green-400 px-3 py-1 rounded text-xs border border-green-500/30 transition-all">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <span>EXECUTE</span>
+            </button>
+            
+            <button onclick="clearEditor()" class="px-3 py-1 text-xs text-gray-500 hover:text-white transition-colors">CLEAR</button>
         </div>
 
-        <div onclick="executeScript()" class="p-2 icon-btn rounded text-gray-400 hover:text-green-500" title="Execute Script">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+        <!-- Script Dropdown -->
+        <div class="relative inline-block text-left">
+            <button onclick="toggleDropdown()" class="flex items-center space-x-1 text-xs bg-white/5 hover:bg-white/10 px-3 py-1 rounded text-gray-400 border border-white/10">
+                <span>Cloud Scripts</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div id="scriptDropdown" class="dropdown-content">
+                <button onclick="loadQuickScript('fly')">✈️ Infinite Yield (Fly/Admin)</button>
+                <button onclick="loadQuickScript('esp')">👁️ Simple ESP</button>
+                <button onclick="loadQuickScript('speed')">⚡ Speed Hub</button>
+                <button onclick="loadQuickScript('dex')">🛠️ Dark Dex V3</button>
+                <button onclick="loadQuickScript('remote')">📡 Remote Spy</button>
+            </div>
         </div>
     </div>
 
-    <!-- Monaco Editor -->
     <main class="flex-grow relative overflow-hidden bg-editor-main">
         <div id="container"></div>
     </main>
 
     <script>
         let editor;
-        const defaultScript = `print("made by azurion ui")`;
-        let isHomeOpen = false;
+        const defaultScript = `-- Azurion Executor\nprint("Welcome back!")`;
         
+        // Scripts Rápidos em Lua
+        const quickScripts = {
+            fly: `loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()`,
+            esp: `-- Simple Box ESP\nfor i,v in pairs(game.Players:GetChildren()) do\n    print("ESP Loaded for: " .. v.Name)\nend`,
+            speed: `game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100`,
+            dex: `loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/main/Universal/DarkDexV3.lua"))()`,
+            remote: `loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpyV3/main/main.lua"))()`
+        };
+
         let tabs = JSON.parse(localStorage.getItem('krnl_tabs')) || [
             { id: 1, name: 'Untitled 1', content: defaultScript }
         ];
@@ -212,23 +173,7 @@
 
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
         require(['vs/editor/editor.main'], function() {
-            
-            // Sugestões Customizadas (Autocomplete)
-            monaco.languages.registerCompletionItemProvider('lua', {
-                provideCompletionItems: (model, position) => {
-                    const suggestions = [
-                        { label: 'print', kind: monaco.languages.CompletionItemKind.Function, insertText: 'print("${1:message}")', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
-                        { label: 'warn', kind: monaco.languages.CompletionItemKind.Function, insertText: 'warn("${1:warning}")', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
-                        { label: 'task.wait', kind: monaco.languages.CompletionItemKind.Function, insertText: 'task.wait(${1:0.1})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
-                        { label: 'game:GetService', kind: monaco.languages.CompletionItemKind.Method, insertText: 'game:GetService("${1:Players}")', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
-                        { label: 'local', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'local ${1:name} = ${2:value}', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
-                        { label: 'Players.LocalPlayer', kind: monaco.languages.CompletionItemKind.Property, insertText: 'game:GetService("Players").LocalPlayer' }
-                    ];
-                    return { suggestions: suggestions };
-                }
-            });
-
-            monaco.editor.defineTheme('krnlTheme', {
+            monaco.editor.defineTheme('azurionTheme', {
                 base: 'vs-dark', inherit: true, rules: [],
                 colors: { 'editor.background': '#1a1a1a', 'editor.lineHighlightBackground': '#252526' }
             });
@@ -238,18 +183,11 @@
             editor = monaco.editor.create(document.getElementById('container'), {
                 value: currentTab.content,
                 language: 'lua',
-                theme: 'krnlTheme',
+                theme: 'azurionTheme',
                 automaticLayout: true,
                 minimap: { enabled: false },
-                cursorSmoothCaretAnimation: "on",
-                cursorBlinking: "expand",
-                smoothScrolling: true,
-                mouseWheelZoom: true,
-                fontFamily: "'Cascadia Code', Consolas, monospace",
                 fontSize: 14,
-                padding: { top: 10 },
-                suggestOnTriggerCharacters: true,
-                quickSuggestions: true
+                fontFamily: "'Cascadia Code', Consolas, monospace"
             });
 
             editor.onDidChangeModelContent(() => {
@@ -263,31 +201,33 @@
             renderTabs();
         });
 
-        // FUNÇÕES DE LOGICA E INTEGRAÇÃO
-
-        function toggleHome() {
-            const overlay = document.getElementById('home-overlay');
-            isHomeOpen = !isHomeOpen;
-            overlay.style.display = isHomeOpen ? 'flex' : 'none';
-        }
-
         function saveToLocal() {
             localStorage.setItem('krnl_tabs', JSON.stringify(tabs));
             localStorage.setItem('krnl_active_tab', JSON.stringify(activeTabId));
         }
 
+        // Envio de mensagens para o C#
         function windowAction(action) {
-            if (window.chrome?.webview) window.chrome.webview.postMessage({ action: action });
+            if (window.chrome?.webview) {
+                // Seu C# espera um objeto WebMessage JSON
+                window.chrome.webview.postMessage({ action: action });
+            }
         }
 
         function handleResize(e, direction) {
-            if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'resize', direction: direction });
+            e.preventDefault();
+            if (window.chrome?.webview) {
+                window.chrome.webview.postMessage({ action: 'resize', direction: direction });
+            }
         }
 
         function checkDrag(e) {
-            if (e.target.closest('.icon-btn') || e.target.closest('.tab') || e.target.closest('.resizer')) return;
+            // Se clicar na Header, dispara o drag no C#
             if (e.target.closest('header')) {
-                if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'drag' });
+                if (e.target.closest('.icon-btn') || e.target.closest('.tab') || e.target.closest('button')) return;
+                if (window.chrome?.webview) {
+                    window.chrome.webview.postMessage({ action: 'drag' });
+                }
             }
         }
 
@@ -297,55 +237,55 @@
 
         function executeScript() {
             const code = editor.getValue();
-            if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'execute', script: code });
+            if (window.chrome?.webview) {
+                window.chrome.webview.postMessage({ action: 'execute', script: code });
+            }
         }
 
         function clearEditor() {
-            editor.setValue('');
+            editor.setValue("");
         }
 
-        // GERENCIAMENTO DE ABAS (FUSÃO DA LÓGICA ANTIGA COM NOVA UI)
+        function toggleDropdown() {
+            document.getElementById("scriptDropdown").style.display = 
+                document.getElementById("scriptDropdown").style.display === "block" ? "none" : "block";
+        }
 
+        function loadQuickScript(key) {
+            editor.setValue(quickScripts[key]);
+            toggleDropdown();
+        }
+
+        // Fechar dropdown ao clicar fora
+        window.onclick = function(event) {
+            if (!event.target.closest('.relative')) {
+                document.getElementById("scriptDropdown").style.display = "none";
+            }
+        }
+
+        // Sistema de Abas
         function addNewTab() {
-            if (isHomeOpen) toggleHome();
             const id = Date.now();
-            tabs.push({ id, name: `Untitled ${tabs.length + 1}`, content: defaultScript });
+            tabs.push({ id, name: `Script ${tabs.length + 1}`, content: '-- New Script' });
             switchTab(id);
-            
-            setTimeout(() => {
-                const container = document.getElementById('tabs-container');
-                container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
-            }, 100);
         }
 
         function renderTabs() {
             const container = document.getElementById('tabs-container');
             container.innerHTML = '';
-            
             tabs.forEach(t => {
                 const isSelected = t.id === activeTabId;
                 const tabDiv = document.createElement('div');
-                tabDiv.className = `tab h-full flex items-center px-4 text-xs cursor-pointer border-r border-black/20 ${isSelected ? 'bg-tab-active border-accent text-white font-medium' : 'bg-tab-inactive text-gray-500 hover:text-gray-300'}`;
+                tabDiv.className = `tab h-full flex items-center px-4 text-[10px] cursor-pointer border-r border-black/20 font-medium tracking-tight ${isSelected ? 'bg-tab-active text-white' : 'bg-tab-inactive text-gray-500'}`;
                 
                 const span = document.createElement('span');
-                span.className = 'truncate max-w-[120px] pointer-events-none mr-2';
-                span.textContent = t.name;
-
-                // Lógica de Renomear (Double Click do código antigo)
-                tabDiv.ondblclick = (e) => {
-                    e.stopPropagation();
-                    renameTab(t.id, span);
-                };
-
+                span.textContent = t.name.toUpperCase();
                 tabDiv.onclick = () => switchTab(t.id);
                 
                 const closeBtn = document.createElement('span');
                 closeBtn.innerHTML = '✕';
-                closeBtn.className = 'hover:bg-red-500/20 hover:text-red-400 ml-auto w-5 h-5 flex items-center justify-center rounded-sm transition-all';
-                closeBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    closeTab(t.id, tabDiv);
-                };
+                closeBtn.className = 'ml-3 hover:text-red-500 transition-colors';
+                closeBtn.onclick = (e) => { e.stopPropagation(); closeTab(t.id); };
 
                 tabDiv.appendChild(span);
                 tabDiv.appendChild(closeBtn);
@@ -353,84 +293,20 @@
             });
         }
 
-        function renameTab(id, span) {
-            const currentName = span.textContent;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = currentName;
-            input.className = 'tab-rename-input';
-            
-            span.replaceWith(input);
-            input.focus();
-            input.select();
-
-            const finishRename = () => {
-                const newName = input.value.trim() || currentName;
-                const tab = tabs.find(t => t.id === id);
-                if (tab) tab.name = newName;
-                renderTabs();
-                saveToLocal();
-            };
-
-            input.onblur = finishRename;
-            input.onkeydown = (e) => {
-                if (e.key === 'Enter') finishRename();
-                if (e.key === 'Escape') renderTabs();
-            };
-        }
-
-        function closeTab(id, element) {
-            if (tabs.length === 1) {
-                tabs[0].content = '';
-                tabs[0].name = 'Untitled 1';
-                editor.setValue('');
-                renderTabs();
-                return;
-            }
-            
-            element.style.opacity = '0';
-            element.style.transform = 'translateY(-10px)';
-
-            setTimeout(() => {
-                const index = tabs.findIndex(t => t.id === id);
-                tabs = tabs.filter(t => t.id !== id);
-                if (activeTabId === id) {
-                    activeTabId = tabs[Math.max(0, index - 1)].id;
-                    editor.setValue(tabs.find(t => t.id === activeTabId).content);
-                }
-                renderTabs();
-                saveToLocal();
-            }, 200);
-        }
-
         function switchTab(id) {
-            if (isHomeOpen) toggleHome();
-            if (activeTabId === id && editor.getValue() === tabs.find(t => t.id === id).content) return;
-
-            const oldTab = tabs.find(t => t.id === activeTabId);
-            if(oldTab) oldTab.content = editor.getValue();
-
             activeTabId = id;
-            const next = tabs.find(t => t.id === id);
-            
-            // Transição visual de troca de conteúdo
-            const container = document.getElementById('container');
-            container.style.opacity = '0';
-            
-            setTimeout(() => {
-                editor.setValue(next.content);
-                container.style.opacity = '1';
-                renderTabs();
-                saveToLocal();
-            }, 100);
+            const tab = tabs.find(t => t.id === id);
+            editor.setValue(tab.content);
+            renderTabs();
+            saveToLocal();
         }
 
-        // Scroll horizontal com o mouse nas abas
-        const tabsContainer = document.getElementById('tabs-container');
-        tabsContainer.addEventListener('wheel', (evt) => {
-            evt.preventDefault();
-            tabsContainer.scrollLeft += evt.deltaY;
-        });
+        function closeTab(id) {
+            if (tabs.length === 1) return;
+            tabs = tabs.filter(t => t.id !== id);
+            if (activeTabId === id) activeTabId = tabs[0].id;
+            switchTab(activeTabId);
+        }
 
         window.addEventListener('resize', () => editor && editor.layout());
     </script>
