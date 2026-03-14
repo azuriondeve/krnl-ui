@@ -107,17 +107,46 @@
             padding: 20px;
             height: 100%;
             overflow-y: auto;
+            background-color: #1e1e1e;
         }
 
         .process-card {
-            background: #2d2d2d;
-            padding: 12px;
-            border-radius: 4px;
-            margin-bottom: 8px;
+            background: #252526;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-left: 3px solid #007acc;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s;
+        }
+
+        .process-card:hover {
+            background: #2d2d2d;
+            border-color: #007acc;
+        }
+
+        .process-card.selected {
+            border-left: 4px solid #007acc;
+            background: rgba(0, 122, 204, 0.05);
+        }
+
+        .checkbox-custom {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #444;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .checkbox-custom.checked {
+            background: #007acc;
+            border-color: #007acc;
         }
 
         .resizer { position: absolute; z-index: 9999; }
@@ -199,19 +228,25 @@
 
         <!-- Processes View -->
         <div id="process-view">
-            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                Active Instances (Multi-Account)
-            </h2>
-            <div id="pid-list">
-                <p class="text-gray-500 text-sm italic">No processes injected yet.</p>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    Target Instances
+                </h2>
+                <button onclick="toggleSelectAll()" class="text-xs text-gray-400 hover:text-white bg-white/5 px-3 py-1 rounded border border-white/10 transition-all">
+                    Toggle All
+                </button>
+            </div>
+            
+            <div id="pid-list" class="max-w-3xl mx-auto">
+                <p class="text-gray-500 text-sm italic text-center mt-10">No processes injected yet. Use the syringe icon to attach.</p>
             </div>
         </div>
     </main>
 
     <script>
         let editor;
-        let shortcuts = [];
+        let selectedPids = new Set();
         let currentView = 'editor';
         const defaultScript = `-- Azurion UI\nprint("Hello from Azurion UI!")`;
         
@@ -253,27 +288,62 @@
             }
         }
 
-        // Update PID List (Triggered by C#)
-        function updatePidList(pidsJson) {
-            const list = document.getElementById('pid-list');
-            const pids = JSON.parse(pidsJson); 
+        // Handle PID Selection
+        function togglePid(pid) {
+            if (selectedPids.has(pid)) {
+                selectedPids.delete(pid);
+            } else {
+                selectedPids.add(pid);
+            }
+            renderPidList();
+        }
+
+        function toggleSelectAll() {
+            const cards = document.querySelectorAll('.process-card');
+            const allPids = Array.from(cards).map(c => parseInt(c.dataset.pid));
             
-            if (pids.length === 0) {
-                list.innerHTML = '<p class="text-gray-500 text-sm italic">No processes injected yet.</p>';
+            if (selectedPids.size === allPids.length) {
+                selectedPids.clear();
+            } else {
+                allPids.forEach(pid => selectedPids.add(pid));
+            }
+            renderPidList();
+        }
+
+        let lastPids = [];
+        function updatePidList(pidsJson) {
+            lastPids = JSON.parse(pidsJson);
+            renderPidList();
+        }
+
+        function renderPidList() {
+            const list = document.getElementById('pid-list');
+            
+            if (lastPids.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-sm italic text-center mt-10">No processes injected yet. Use the syringe icon to attach.</p>';
                 return;
             }
 
-            list.innerHTML = pids.map(pid => `
-                <div class="process-card">
-                    <div>
-                        <span class="text-white font-mono font-bold">PID: ${pid}</span>
-                        <div class="text-[10px] text-gray-500 uppercase">RobloxPlayerBeta.exe</div>
+            list.innerHTML = lastPids.map(pid => {
+                const isSelected = selectedPids.has(pid);
+                return `
+                <div class="process-card ${isSelected ? 'selected' : ''}" data-pid="${pid}" onclick="togglePid(${pid})">
+                    <div class="flex items-center gap-4">
+                        <div class="checkbox-custom ${isSelected ? 'checked' : ''}">
+                            ${isSelected ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+                        </div>
+                        <div>
+                            <span class="text-white font-mono font-bold text-sm">PID: ${pid}</span>
+                            <div class="text-[10px] text-gray-500 uppercase tracking-wider">RobloxPlayerBeta.exe</div>
+                        </div>
                     </div>
-                    <div class="text-xs text-green-500 font-semibold bg-green-500/10 px-2 py-1 rounded">
-                        ATTACHED
+                    <div class="flex items-center gap-3">
+                        <div class="text-[10px] text-green-500 font-bold bg-green-500/10 px-2 py-1 rounded border border-green-500/20">
+                            STABLE
+                        </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function requestPidUpdate() {
@@ -327,9 +397,14 @@
         function executeScript() {
             const rawCode = editor.getValue();
             if (window.chrome?.webview) {
+                // Se nenhum estiver selecionado explicitamente, enviamos para todos (comportamento padrão)
+                // Caso contrário, enviamos a lista selecionada
+                const targets = selectedPids.size > 0 ? Array.from(selectedPids) : lastPids;
+                
                 window.chrome.webview.postMessage({ 
                     action: 'execute', 
-                    script: rawCode
+                    script: rawCode,
+                    targets: targets
                 });
             }
         }
@@ -352,7 +427,7 @@
         }
 
         function checkDrag(e) {
-            if (e.target.closest('.icon-btn') || e.target.closest('.tab') || e.target.closest('.resizer') || e.target.closest('#home-menu')) return;
+            if (e.target.closest('.icon-btn') || e.target.closest('.tab') || e.target.closest('.resizer') || e.target.closest('#home-menu') || e.target.closest('.process-card')) return;
             if (e.target.tagName === 'HEADER' || e.target.parentElement?.tagName === 'HEADER') {
                 if (window.chrome?.webview) {
                     window.chrome.webview.postMessage({ action: 'drag' });
