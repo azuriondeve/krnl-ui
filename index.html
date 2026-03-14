@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>https://krnl.vip/download/</title>
+    <title>Azurion UI - Executor Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -27,6 +27,12 @@
         
         .border-accent { 
             border-top: 2px solid #007acc; 
+            animation: borderSlide 0.4s ease-out;
+        }
+
+        @keyframes borderSlide {
+            from { width: 0; opacity: 0; }
+            to { width: 100%; opacity: 1; }
         }
 
         ::-webkit-scrollbar { height: 3px; width: 6px; }
@@ -36,10 +42,11 @@
         #container { 
             width: 100%; 
             height: 100%; 
+            transition: opacity 0.2s ease;
         }
 
         .icon-btn { 
-            transition: background 0.1s; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
             cursor: pointer; 
             opacity: 0.7; 
             outline: none;
@@ -47,13 +54,9 @@
         .icon-btn:hover { 
             opacity: 1; 
             background: rgba(255,255,255,0.08); 
+            transform: scale(1.05);
         }
-        /* Feedback azul ao clicar nos botões de ação */
-        .action-btn:active {
-            outline: 2px solid #007acc;
-            outline-offset: -2px;
-            opacity: 1;
-        }
+        .icon-btn:active { transform: scale(0.95); }
 
         .tab { 
             min-width: 140px; 
@@ -61,48 +64,82 @@
             flex-shrink: 0; 
             user-select: none; 
             position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideInTab 0.3s ease-out;
+        }
+
+        @keyframes slideInTab {
+            from { transform: translateY(-5px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         #tabs-container {
             display: flex;
             height: 100%;
             overflow-x: auto;
+            scroll-behavior: smooth;
         }
         #tabs-container::-webkit-scrollbar { display: none; }
 
-        /* Interface Home Overlay */
+        .tab-rename-input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #007acc;
+            color: white;
+            outline: none;
+            width: 100%;
+            font-size: 11px;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+
         #home-overlay {
             position: absolute;
             top: 36px; 
             left: 0;
             width: 100%;
             height: calc(100% - 36px);
-            background: rgba(20, 20, 20, 0.95);
-            z-index: 40; 
+            background: rgba(15, 15, 15, 0.96);
+            z-index: 100; 
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
+            animation: fadeIn 0.3s ease;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Resizers */
+        .resizer { position: absolute; z-index: 9999; }
+        .resizer.right { top: 0; right: 0; width: 4px; height: 100%; cursor: e-resize; }
+        .resizer.left { top: 0; left: 0; width: 4px; height: 100%; cursor: w-resize; }
+        .resizer.bottom { bottom: 0; left: 0; width: 100%; height: 4px; cursor: s-resize; }
+        .resizer.top { top: 0; left: 0; width: 100%; height: 4px; cursor: n-resize; }
     </style>
 </head>
 <body onmousedown="checkDrag(event)">
 
     <!-- Resize Handles -->
-    <div class="resizer top absolute top-0 left-0 w-full h-1 z-[9999] cursor-n-resize" onmousedown="handleResize(event, 'top')"></div>
-    <div class="resizer bottom absolute bottom-0 left-0 w-full h-1 z-[9999] cursor-s-resize" onmousedown="handleResize(event, 'bottom')"></div>
-    <div class="resizer left absolute top-0 left-0 w-1 h-full z-[9999] cursor-w-resize" onmousedown="handleResize(event, 'left')"></div>
-    <div class="resizer right absolute top-0 right-0 w-1 h-full z-[9999] cursor-e-resize" onmousedown="handleResize(event, 'right')"></div>
+    <div class="resizer top" onmousedown="handleResize(event, 'top')"></div>
+    <div class="resizer bottom" onmousedown="handleResize(event, 'bottom')"></div>
+    <div class="resizer left" onmousedown="handleResize(event, 'left')"></div>
+    <div class="resizer right" onmousedown="handleResize(event, 'right')"></div>
 
     <!-- Interface Home Overlay -->
-    <div id="home-overlay">
-        <h1 class="text-2xl font-light text-gray-300 tracking-widest">
-            KRNL New Ui theme by: <span class="text-blue-500 font-semibold">Azurion</span>
-        </h1>
+    <div id="home-overlay" onclick="toggleHome()">
+        <div class="text-center animate__animated animate__zoomIn">
+            <h1 class="text-3xl font-light text-gray-300 tracking-widest mb-2">
+                KRNL <span class="text-blue-500 font-semibold">AZURION</span>
+            </h1>
+            <p class="text-gray-500 text-sm uppercase tracking-tighter">Premium UI Theme</p>
+        </div>
         
-        <div class="absolute bottom-8 right-8 opacity-20 text-[10px] tracking-tighter text-gray-500 uppercase select-none pointer-events-none">
-            UI MADE BY AZURION
+        <div class="absolute bottom-8 text-[10px] tracking-widest text-gray-600 uppercase select-none">
+            Click anywhere to return
         </div>
     </div>
 
@@ -138,7 +175,7 @@
     <!-- Toolbar -->
     <div class="bg-editor-main h-11 flex items-center justify-between px-3 border-b border-black/20 relative">
         <div class="flex items-center space-x-2">
-            <div onclick="attachProcess()" class="p-2 icon-btn action-btn rounded text-gray-400" title="Attach">
+            <div onclick="attachProcess()" class="p-2 icon-btn rounded text-gray-400 hover:text-blue-400" title="Attach (Injetar)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m18 2 4 4"></path>
                     <path d="m17 7 3-3"></path>
@@ -148,10 +185,13 @@
                     <path d="m14 4 6 6"></path>
                 </svg>
             </div>
+            <div onclick="clearEditor()" class="p-2 icon-btn rounded text-gray-400 hover:text-yellow-500" title="Clear Editor">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+            </div>
         </div>
 
-        <div onclick="executeScript()" class="p-2 icon-btn action-btn rounded text-gray-400" title="Execute">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+        <div onclick="executeScript()" class="p-2 icon-btn rounded text-gray-400 hover:text-green-500" title="Execute Script">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
         </div>
     </div>
 
@@ -173,54 +213,16 @@
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
         require(['vs/editor/editor.main'], function() {
             
-            // Registrar sugestões customizadas para Lua
+            // Sugestões Customizadas (Autocomplete)
             monaco.languages.registerCompletionItemProvider('lua', {
                 provideCompletionItems: (model, position) => {
                     const suggestions = [
-                        {
-                            label: 'print',
-                            kind: monaco.languages.CompletionItemKind.Function,
-                            insertText: 'print(${1:string})',
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                            detail: 'Imprime uma mensagem no console'
-                        },
-                        {
-                            label: 'warn',
-                            kind: monaco.languages.CompletionItemKind.Function,
-                            insertText: 'warn(${1:string})',
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                            detail: 'Imprime um aviso no console'
-                        },
-                        {
-                            label: 'task.wait',
-                            kind: monaco.languages.CompletionItemKind.Function,
-                            insertText: 'task.wait(${1:number})',
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                            detail: 'Aguarda x segundos'
-                        },
-                        {
-                            label: 'game:GetService',
-                            kind: monaco.languages.CompletionItemKind.Method,
-                            insertText: 'game:GetService("${1:ServiceName}")',
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                        },
-                        {
-                            label: 'local',
-                            kind: monaco.languages.CompletionItemKind.Keyword,
-                            insertText: 'local ${1:name} = ${2:value}',
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                        },
-                        {
-                            label: 'function',
-                            kind: monaco.languages.CompletionItemKind.Keyword,
-                            insertText: 'function ${1:name}(${2:params})\n\t$0\nend',
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                        },
-                        {
-                            label: 'Players.LocalPlayer',
-                            kind: monaco.languages.CompletionItemKind.Property,
-                            insertText: 'game:GetService("Players").LocalPlayer'
-                        }
+                        { label: 'print', kind: monaco.languages.CompletionItemKind.Function, insertText: 'print("${1:message}")', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+                        { label: 'warn', kind: monaco.languages.CompletionItemKind.Function, insertText: 'warn("${1:warning}")', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+                        { label: 'task.wait', kind: monaco.languages.CompletionItemKind.Function, insertText: 'task.wait(${1:0.1})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+                        { label: 'game:GetService', kind: monaco.languages.CompletionItemKind.Method, insertText: 'game:GetService("${1:Players}")', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+                        { label: 'local', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'local ${1:name} = ${2:value}', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+                        { label: 'Players.LocalPlayer', kind: monaco.languages.CompletionItemKind.Property, insertText: 'game:GetService("Players").LocalPlayer' }
                     ];
                     return { suggestions: suggestions };
                 }
@@ -246,14 +248,8 @@
                 fontFamily: "'Cascadia Code', Consolas, monospace",
                 fontSize: 14,
                 padding: { top: 10 },
-                // Garantir que as sugestões funcionem agressivamente
                 suggestOnTriggerCharacters: true,
-                acceptSuggestionOnEnter: "on",
-                quickSuggestions: { other: true, comments: false, strings: true },
-                wordBasedSuggestions: true,
-                suggestFontSize: 13,
-                suggestLineHeight: 22,
-                snippetSuggestions: "top"
+                quickSuggestions: true
             });
 
             editor.onDidChangeModelContent(() => {
@@ -267,6 +263,8 @@
             renderTabs();
         });
 
+        // FUNÇÕES DE LOGICA E INTEGRAÇÃO
+
         function toggleHome() {
             const overlay = document.getElementById('home-overlay');
             isHomeOpen = !isHomeOpen;
@@ -279,23 +277,17 @@
         }
 
         function windowAction(action) {
-            if (window.chrome?.webview) {
-                window.chrome.webview.postMessage({ action: action });
-            }
+            if (window.chrome?.webview) window.chrome.webview.postMessage({ action: action });
         }
 
         function handleResize(e, direction) {
-            if (window.chrome?.webview) {
-                window.chrome.webview.postMessage({ action: 'resize', direction: direction });
-            }
+            if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'resize', direction: direction });
         }
 
         function checkDrag(e) {
             if (e.target.closest('.icon-btn') || e.target.closest('.tab') || e.target.closest('.resizer')) return;
             if (e.target.closest('header')) {
-                if (window.chrome?.webview) {
-                    window.chrome.webview.postMessage({ action: 'drag' });
-                }
+                if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'drag' });
             }
         }
 
@@ -308,14 +300,22 @@
             if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'execute', script: code });
         }
 
+        function clearEditor() {
+            editor.setValue('');
+        }
+
+        // GERENCIAMENTO DE ABAS (FUSÃO DA LÓGICA ANTIGA COM NOVA UI)
+
         function addNewTab() {
             if (isHomeOpen) toggleHome();
             const id = Date.now();
             tabs.push({ id, name: `Untitled ${tabs.length + 1}`, content: defaultScript });
-            activeTabId = id;
-            editor.setValue(defaultScript);
-            renderTabs();
-            saveToLocal();
+            switchTab(id);
+            
+            setTimeout(() => {
+                const container = document.getElementById('tabs-container');
+                container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+            }, 100);
         }
 
         function renderTabs() {
@@ -331,6 +331,12 @@
                 span.className = 'truncate max-w-[120px] pointer-events-none mr-2';
                 span.textContent = t.name;
 
+                // Lógica de Renomear (Double Click do código antigo)
+                tabDiv.ondblclick = (e) => {
+                    e.stopPropagation();
+                    renameTab(t.id, span);
+                };
+
                 tabDiv.onclick = () => switchTab(t.id);
                 
                 const closeBtn = document.createElement('span');
@@ -338,7 +344,7 @@
                 closeBtn.className = 'hover:bg-red-500/20 hover:text-red-400 ml-auto w-5 h-5 flex items-center justify-center rounded-sm transition-all';
                 closeBtn.onclick = (e) => {
                     e.stopPropagation();
-                    closeTab(t.id);
+                    closeTab(t.id, tabDiv);
                 };
 
                 tabDiv.appendChild(span);
@@ -347,30 +353,79 @@
             });
         }
 
-        function closeTab(id) {
-            if (tabs.length === 1) return;
-            const index = tabs.findIndex(t => t.id === id);
-            tabs = tabs.filter(t => t.id !== id);
-            if (activeTabId === id) {
-                activeTabId = tabs[Math.max(0, index - 1)].id;
-                editor.setValue(tabs.find(t => t.id === activeTabId).content);
+        function renameTab(id, span) {
+            const currentName = span.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentName;
+            input.className = 'tab-rename-input';
+            
+            span.replaceWith(input);
+            input.focus();
+            input.select();
+
+            const finishRename = () => {
+                const newName = input.value.trim() || currentName;
+                const tab = tabs.find(t => t.id === id);
+                if (tab) tab.name = newName;
+                renderTabs();
+                saveToLocal();
+            };
+
+            input.onblur = finishRename;
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') finishRename();
+                if (e.key === 'Escape') renderTabs();
+            };
+        }
+
+        function closeTab(id, element) {
+            if (tabs.length === 1) {
+                tabs[0].content = '';
+                tabs[0].name = 'Untitled 1';
+                editor.setValue('');
+                renderTabs();
+                return;
             }
-            renderTabs();
-            saveToLocal();
+            
+            element.style.opacity = '0';
+            element.style.transform = 'translateY(-10px)';
+
+            setTimeout(() => {
+                const index = tabs.findIndex(t => t.id === id);
+                tabs = tabs.filter(t => t.id !== id);
+                if (activeTabId === id) {
+                    activeTabId = tabs[Math.max(0, index - 1)].id;
+                    editor.setValue(tabs.find(t => t.id === activeTabId).content);
+                }
+                renderTabs();
+                saveToLocal();
+            }, 200);
         }
 
         function switchTab(id) {
             if (isHomeOpen) toggleHome();
-            if (activeTabId === id) return;
+            if (activeTabId === id && editor.getValue() === tabs.find(t => t.id === id).content) return;
+
             const oldTab = tabs.find(t => t.id === activeTabId);
             if(oldTab) oldTab.content = editor.getValue();
+
             activeTabId = id;
             const next = tabs.find(t => t.id === id);
-            editor.setValue(next.content);
-            renderTabs();
-            saveToLocal();
+            
+            // Transição visual de troca de conteúdo
+            const container = document.getElementById('container');
+            container.style.opacity = '0';
+            
+            setTimeout(() => {
+                editor.setValue(next.content);
+                container.style.opacity = '1';
+                renderTabs();
+                saveToLocal();
+            }, 100);
         }
 
+        // Scroll horizontal com o mouse nas abas
         const tabsContainer = document.getElementById('tabs-container');
         tabsContainer.addEventListener('wheel', (evt) => {
             evt.preventDefault();
