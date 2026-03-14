@@ -1,189 +1,334 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Executor UI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executor Pro - Monaco Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <style>
+        body { background-color: #1a1a1a; color: #d4d4d4; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        .bg-editor-main { background-color: #1a1a1a; }
+        .bg-header { background-color: #252526; }
+        .bg-tab-active { background-color: #1a1a1a; }
+        .bg-tab-inactive { background-color: #2d2d2d; }
+        .border-accent { border-top: 1px solid #007acc; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        #container { width: 100%; height: 100%; }
+        .icon-btn { transition: all 0.2s; cursor: pointer; opacity: 0.7; }
+        .icon-btn:hover { opacity: 1; background: rgba(255,255,255,0.05); }
+        .tab { min-width: 120px; max-width: 200px; user-select: none; position: relative; }
+        
+        /* Input invisível para renomear */
+        .tab-rename-input {
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+            width: 100%;
+            font-size: inherit;
+        }
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
-
-<style>
-body{
-background:#1a1a1a;
-color:#d4d4d4;
-margin:0;
-height:100vh;
-display:flex;
-flex-direction:column;
-font-family:Segoe UI;
-overflow:hidden;
-}
-
-.bg-header{background:#252526}
-.bg-editor{background:#1a1a1a}
-
-.icon-btn{
-cursor:pointer;
-opacity:.7;
-padding:8px;
-}
-
-.icon-btn:hover{
-opacity:1;
-background:rgba(255,255,255,.05)
-}
-
-#container{
-width:100%;
-height:100%;
-}
-</style>
+        #instance-modal {
+            display: none;
+            position: absolute;
+            top: 85px;
+            left: 12px;
+            width: 200px;
+            background: #252526;
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 100;
+            border-radius: 4px;
+        }
+    </style>
 </head>
+<body onmousedown="checkDrag(event)">
 
-<body onmousedown="dragCheck(event)">
+    <!-- Header / Tab Bar -->
+    <header class="bg-header h-9 flex items-center justify-between select-none border-b border-black/40">
+        <div class="flex items-center h-full overflow-hidden">
+            <div class="px-3 h-full flex items-center icon-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            </div>
+            <div id="tabs-container" class="flex items-center h-full"></div>
+            <div onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5">
+                <span class="text-lg font-light">+</span>
+            </div>
+        </div>
 
-<!-- HEADER -->
-<header class="bg-header h-9 flex items-center justify-between select-none">
+        <div class="flex items-center h-full">
+            <div onclick="windowAction('minimize')" class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400">
+                <div class="w-3 h-[1px] bg-current"></div>
+            </div>
+            <div onclick="windowAction('maximize')" class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400">
+                <div class="w-3 h-3 border border-current"></div>
+            </div>
+            <div onclick="windowAction('close')" class="px-4 h-full flex items-center hover:bg-red-600 cursor-pointer text-gray-400 hover:text-white">
+                <span class="text-sm">✕</span>
+            </div>
+        </div>
+    </header>
 
-<div class="flex items-center h-full px-2 space-x-1">
+    <!-- Toolbar -->
+    <div class="bg-editor-main h-11 flex items-center justify-between px-3 border-b border-black/20 relative">
+        <div class="flex items-center space-x-1">
+            <div onclick="toggleInstanceModal()" class="p-2 icon-btn rounded flex items-center text-gray-400 relative">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="8"></circle>
+                    <path d="M2 12c0 2 10 2 10 2s10 0 10-2-10-2-10-2-10 0-10 2z"></path>
+                </svg>
+                <span class="text-[8px] ml-1 opacity-50">▼</span>
+            </div>
 
-<!-- ATTACH -->
-<div onclick="attachProcess()" class="icon-btn text-gray-400">
-🔌
-</div>
+            <div onclick="attachProcess()" class="p-2 icon-btn rounded text-gray-400 transform rotate-45">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13V7a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v6"></path>
+                    <path d="M6 13h12"></path>
+                    <path d="M10 13v6a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-6"></path>
+                </svg>
+            </div>
+        </div>
 
-</div>
+        <div onclick="executeScript()" class="p-2 icon-btn rounded text-gray-400 hover:text-green-500">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+        </div>
+    </div>
 
-<div class="flex items-center h-full">
+    <!-- Modal Multi-Instância -->
+    <div id="instance-modal" class="p-2 text-xs">
+        <div class="text-gray-500 mb-2 border-b border-white/10 pb-1 flex justify-between">
+            <span>Instâncias</span>
+            <button onclick="refreshInstances()" class="hover:text-white">↻</button>
+        </div>
+        <div id="pid-list" class="space-y-1 max-h-40 overflow-y-auto"></div>
+    </div>
 
-<!-- MINIMIZE -->
-<div onclick="windowAction('minimize')" class="icon-btn text-gray-400">
-—
-</div>
+    <main class="flex-grow relative overflow-hidden bg-editor-main">
+        <div id="container"></div>
+    </main>
 
-<!-- MAXIMIZE -->
-<div onclick="windowAction('maximize')" class="icon-btn text-gray-400">
-□
-</div>
+    <script>
+        let editor;
+        const defaultScript = `-- krnl ui mod\nprint("Script salvo localmente!")`;
+        
+        // Carrega dados do LocalStorage ou usa o padrão
+        let tabs = JSON.parse(localStorage.getItem('krnl_tabs')) || [
+            { id: 1, name: 'Untitled 1', content: defaultScript }
+        ];
+        let activeTabId = JSON.parse(localStorage.getItem('krnl_active_tab')) || tabs[0].id;
+        
+        let instances = [
+            { pid: 1024, name: "Roblox Client", selected: true },
+            { pid: 2048, name: "Roblox Client", selected: true }
+        ];
 
-<!-- CLOSE -->
-<div onclick="windowAction('close')" class="icon-btn text-gray-400 hover:bg-red-600">
-✕
-</div>
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            monaco.editor.defineTheme('krnlTheme', {
+                base: 'vs-dark', inherit: true, rules: [],
+                colors: { 'editor.background': '#1a1a1a', 'editor.lineHighlightBackground': '#252526' }
+            });
 
-</div>
+            const currentTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
-</header>
+            editor = monaco.editor.create(document.getElementById('container'), {
+                value: currentTab.content,
+                language: 'lua',
+                theme: 'krnlTheme',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                // Configurações para animação suave
+                cursorSmoothCaretAnimation: "on",
+                cursorBlinking: "expand",
+                smoothScrolling: true,
+                mouseWheelZoom: true,
+                fontFamily: "'Cascadia Code', Consolas, 'Courier New', monospace",
+                fontSize: 14
+            });
 
-<!-- TOOLBAR -->
-<div class="bg-editor h-10 flex items-center justify-end px-3 border-b border-black/30">
+            // Salva o conteúdo ao digitar
+            editor.onDidChangeModelContent(() => {
+                const tab = tabs.find(t => t.id === activeTabId);
+                if (tab) {
+                    tab.content = editor.getValue();
+                    saveToLocal();
+                }
+            });
 
-<div onclick="executeScript()" class="icon-btn text-gray-400 hover:text-green-500">
-▶
-</div>
+            renderTabs();
+            renderPids();
+        });
 
-</div>
+        function saveToLocal() {
+            localStorage.setItem('krnl_tabs', JSON.stringify(tabs));
+            localStorage.setItem('krnl_active_tab', JSON.stringify(activeTabId));
+        }
 
-<!-- EDITOR -->
-<main class="flex-grow bg-editor">
-<div id="container"></div>
-</main>
+        function toggleInstanceModal() {
+            const m = document.getElementById('instance-modal');
+            m.style.display = m.style.display === 'block' ? 'none' : 'block';
+        }
 
-<script>
+        function renderPids() {
+            const list = document.getElementById('pid-list');
+            list.innerHTML = instances.map(inst => `
+                <div class="flex items-center justify-between p-1 hover:bg-white/5 rounded">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" ${inst.selected ? 'checked' : ''} 
+                               onchange="togglePid(${inst.pid})" class="accent-blue-500 cursor-pointer">
+                        <span class="text-gray-300">PID: ${inst.pid}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-let editor;
+        function togglePid(pid) {
+            const inst = instances.find(i => i.pid === pid);
+            if(inst) inst.selected = !inst.selected;
+        }
 
-require.config({
-paths:{'vs':'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs'}
-});
+        function windowAction(action) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({ action: action });
+            }
+        }
 
-require(['vs/editor/editor.main'],function(){
+        function checkDrag(e) {
+            if (e.target.tagName === 'HEADER' || e.target.parentElement?.tagName === 'HEADER') {
+                window.chrome.webview.postMessage({ action: 'drag' });
+            }
+        }
 
-editor=monaco.editor.create(document.getElementById('container'),{
+        function attachProcess() {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({ action: 'attach' });
+            }
+        }
 
-value:`print("executor ready")`,
+        function executeScript() {
+            const code = editor.getValue();
+            const selectedPids = instances.filter(i => i.selected).map(i => i.pid);
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({ 
+                    action: 'execute', 
+                    script: code, 
+                    selectedPids: selectedPids 
+                });
+            }
+        }
 
-language:'lua',
+        function addNewTab() {
+            const id = Date.now();
+            tabs.push({ id, name: `Untitled ${tabs.length + 1}`, content: defaultScript });
+            activeTabId = id;
+            editor.setValue(defaultScript);
+            renderTabs();
+            saveToLocal();
+        }
 
-theme:'vs-dark',
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+            
+            tabs.forEach(t => {
+                const isSelected = t.id === activeTabId;
+                const tabDiv = document.createElement('div');
+                tabDiv.className = `tab h-full flex items-center px-4 text-xs cursor-pointer border-r border-black/20 ${isSelected ? 'bg-tab-active border-accent text-white' : 'bg-tab-inactive text-gray-500'}`;
+                
+                // Elemento de texto
+                const span = document.createElement('span');
+                span.className = 'truncate pointer-events-none mr-2';
+                span.textContent = t.name;
 
-automaticLayout:true,
+                // Clique duplo para renomear
+                tabDiv.ondblclick = (e) => {
+                    e.stopPropagation();
+                    renameTab(t.id, span, tabDiv);
+                };
 
-minimap:{enabled:false}
+                tabDiv.onclick = () => switchTab(t.id);
+                
+                // Botão de fechar
+                const closeBtn = document.createElement('span');
+                closeBtn.innerHTML = '&nbsp;✕';
+                closeBtn.className = 'hover:text-red-400 ml-auto';
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    closeTab(t.id);
+                };
 
-});
+                tabDiv.appendChild(span);
+                tabDiv.appendChild(closeBtn);
+                container.appendChild(tabDiv);
+            });
+        }
 
-});
+        function renameTab(id, span, parent) {
+            const currentName = span.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentName;
+            input.className = 'tab-rename-input';
+            
+            span.replaceWith(input);
+            input.focus();
+            input.select();
 
+            const finishRename = () => {
+                const newName = input.value.trim() || currentName;
+                const tab = tabs.find(t => t.id === id);
+                if (tab) tab.name = newName;
+                input.replaceWith(span);
+                span.textContent = newName;
+                saveToLocal();
+                renderTabs();
+            };
 
-// ==========================
-// ATTACH
-// ==========================
+            input.onblur = finishRename;
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') finishRename();
+                if (e.key === 'Escape') {
+                    input.onblur = null;
+                    input.replaceWith(span);
+                    renderTabs();
+                }
+            };
+        }
 
-function attachProcess(){
+        function closeTab(id) {
+            if (tabs.length === 1) return;
+            const index = tabs.findIndex(t => t.id === id);
+            tabs = tabs.filter(t => t.id !== id);
+            if (activeTabId === id) {
+                activeTabId = tabs[Math.max(0, index - 1)].id;
+                editor.setValue(tabs.find(t => t.id === activeTabId).content);
+            }
+            renderTabs();
+            saveToLocal();
+        }
 
-window.chrome.webview.postMessage({
+        function switchTab(id) {
+            if (activeTabId === id) return;
+            const oldTab = tabs.find(t => t.id === activeTabId);
+            if(oldTab) oldTab.content = editor.getValue();
+            
+            activeTabId = id;
+            const next = tabs.find(t => t.id === id);
+            editor.setValue(next.content);
+            renderTabs();
+            saveToLocal();
+        }
 
-action:"attach"
-
-});
-
-}
-
-
-// ==========================
-// EXECUTE
-// ==========================
-
-function executeScript(){
-
-const code=editor.getValue();
-
-window.chrome.webview.postMessage({
-
-action:"execute",
-script:code
-
-});
-
-}
-
-
-// ==========================
-// WINDOW CONTROLS
-// ==========================
-
-function windowAction(a){
-
-window.chrome.webview.postMessage({
-
-action:a
-
-});
-
-}
-
-
-// ==========================
-// DRAG WINDOW
-// ==========================
-
-function dragCheck(e){
-
-if(e.target.tagName==="HEADER"||e.target.parentElement?.tagName==="HEADER"){
-
-window.chrome.webview.postMessage({
-
-action:"drag"
-
-});
-
-}
-
-}
-
-</script>
-
+        window.addEventListener('resize', () => editor && editor.layout());
+        
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('instance-modal');
+            if (!modal.contains(e.target) && !e.target.closest('.icon-btn')) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
