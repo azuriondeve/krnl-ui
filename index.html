@@ -379,6 +379,32 @@
             saveToLocal();
         }
 
+        document.addEventListener('keydown', function(e) {
+            // F12
+            if (e.key === 'F12') {
+                e.preventDefault();
+                alert("Desculpe, não é permitido abrir o DevTools!");
+            }
+        
+            // Ctrl+Shift+I (abrir DevTools)
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                alert("Sorry, opening DevTools is not allowed!");
+            }
+        
+            // Ctrl+Shift+J (console)
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'j') {
+                e.preventDefault();
+                alert("Sorry, opening DevTools is not allowed!");
+            }
+        
+            // Ctrl+U (ver código fonte)
+            if (e.ctrlKey && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                alert("Sorry, viewing the code is not allowed!");
+            }
+        });
+        
         window.addEventListener('resize', () => editor && editor.layout());
     </script>
 </body>
