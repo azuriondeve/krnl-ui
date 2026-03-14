@@ -18,6 +18,7 @@
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
+            position: relative;
         }
         
         .bg-editor-main { background-color: #1a1a1a; }
@@ -111,9 +112,30 @@
             50% { transform: translateY(-2px); }
             100% { transform: translateY(0); }
         }
+
+        /* Áreas de Resize (Invisíveis) */
+        .resizer { position: absolute; z-index: 9999; }
+        .resizer.right { top: 0; right: 0; width: 6px; height: 100%; cursor: e-resize; }
+        .resizer.left { top: 0; left: 0; width: 6px; height: 100%; cursor: w-resize; }
+        .resizer.bottom { bottom: 0; left: 0; width: 100%; height: 6px; cursor: s-resize; }
+        .resizer.top { top: 0; left: 0; width: 100%; height: 6px; cursor: n-resize; }
+        .resizer.bottom-right { bottom: 0; right: 0; width: 12px; height: 12px; cursor: se-resize; }
+        .resizer.bottom-left { bottom: 0; left: 0; width: 12px; height: 12px; cursor: sw-resize; }
+        .resizer.top-right { top: 0; right: 0; width: 12px; height: 12px; cursor: ne-resize; }
+        .resizer.top-left { top: 0; left: 0; width: 12px; height: 12px; cursor: nw-resize; }
     </style>
 </head>
 <body onmousedown="checkDrag(event)">
+
+    <!-- Resize Handles -->
+    <div class="resizer top" onmousedown="handleResize(event, 'top')"></div>
+    <div class="resizer bottom" onmousedown="handleResize(event, 'bottom')"></div>
+    <div class="resizer left" onmousedown="handleResize(event, 'left')"></div>
+    <div class="resizer right" onmousedown="handleResize(event, 'right')"></div>
+    <div class="resizer top-left" onmousedown="handleResize(event, 'top-left')"></div>
+    <div class="resizer top-right" onmousedown="handleResize(event, 'top-right')"></div>
+    <div class="resizer bottom-left" onmousedown="handleResize(event, 'bottom-left')"></div>
+    <div class="resizer bottom-right" onmousedown="handleResize(event, 'bottom-right')"></div>
 
     <!-- Header / Barra de Abas -->
     <header class="bg-header h-9 flex items-center justify-between select-none border-b border-black/40">
@@ -223,7 +245,18 @@
             }
         }
 
+        // Função para lidar com o início do redimensionamento
+        function handleResize(e, direction) {
+            if (window.chrome?.webview) {
+                // Envia a direção para o C# lidar com o Win32 Resize
+                window.chrome.webview.postMessage({ action: 'resize', direction: direction });
+            }
+        }
+
         function checkDrag(e) {
+            // Verifica se clicou em algo que não deve disparar drag (como botões)
+            if (e.target.closest('.icon-btn') || e.target.closest('.tab') || e.target.closest('.resizer')) return;
+
             if (e.target.tagName === 'HEADER' || e.target.parentElement?.tagName === 'HEADER') {
                 if (window.chrome?.webview) {
                     window.chrome.webview.postMessage({ action: 'drag' });
