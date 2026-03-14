@@ -5,95 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Executor Pro - Monaco Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Carregando o Monaco Editor da CDN da Microsoft -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <style>
-        body {
-            background-color: #1a1a1a;
-            color: #d4d4d4;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Cores Fiéis à Imagem */
+        body { background-color: #1a1a1a; color: #d4d4d4; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         .bg-editor-main { background-color: #1a1a1a; }
         .bg-header { background-color: #252526; }
         .bg-tab-active { background-color: #1a1a1a; }
         .bg-tab-inactive { background-color: #2d2d2d; }
-        
         .border-accent { border-top: 1px solid #007acc; }
-
-        /* Esconder Scrollbar do Body */
-        ::-webkit-scrollbar { width: 0px; }
-
-        #container {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        /* Ajuste fino dos ícones para ficarem idênticos */
-        .icon-btn {
-            transition: all 0.2s;
-            cursor: pointer;
-            opacity: 0.7;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        #container { width: 100%; height: 100%; }
+        .icon-btn { transition: all 0.2s; cursor: pointer; opacity: 0.7; }
         .icon-btn:hover { opacity: 1; background: rgba(255,255,255,0.05); }
+        .tab { min-width: 120px; max-width: 200px; user-select: none; }
+        
+        /* Drag handle para o C# */
+        .drag-region { -webkit-app-region: drag; }
 
-        .tab {
-            min-width: 120px;
-            max-width: 200px;
-            transition: background 0.2s;
-            user-select: none;
+        /* Modal Multi-Instância */
+        #instance-modal {
+            display: none;
+            position: absolute;
+            top: 85px;
+            left: 12px;
+            width: 200px;
+            background: #252526;
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 100;
+            border-radius: 4px;
         }
     </style>
 </head>
-<body>
+<body onmousedown="checkDrag(event)">
 
     <!-- Header / Tab Bar -->
     <header class="bg-header h-9 flex items-center justify-between select-none border-b border-black/40">
-        <div class="flex items-center h-full">
-            <!-- Logo Home -->
+        <div class="flex items-center h-full overflow-hidden">
             <div class="px-3 h-full flex items-center icon-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400">
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
             </div>
-            
-            <!-- Tabs Container -->
-            <div id="tabs-container" class="flex items-center h-full">
-                <!-- Abas serão geradas via JS -->
-            </div>
-
-            <!-- New Tab Button -->
+            <div id="tabs-container" class="flex items-center h-full"></div>
             <div onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5">
                 <span class="text-lg font-light">+</span>
             </div>
         </div>
 
-        <!-- Window Controls -->
         <div class="flex items-center h-full">
-            <div class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400">
+            <div onclick="windowAction('minimize')" class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400">
                 <div class="w-3 h-[1px] bg-current"></div>
             </div>
-            <div class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400">
+            <div onclick="windowAction('maximize')" class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400">
                 <div class="w-3 h-3 border border-current"></div>
             </div>
-            <div class="px-4 h-full flex items-center hover:bg-red-600 cursor-pointer text-gray-400 hover:text-white">
+            <div onclick="windowAction('close')" class="px-4 h-full flex items-center hover:bg-red-600 cursor-pointer text-gray-400 hover:text-white">
                 <span class="text-sm">✕</span>
             </div>
         </div>
     </header>
 
     <!-- Toolbar -->
-    <div class="bg-editor-main h-11 flex items-center justify-between px-3 border-b border-black/20">
+    <div class="bg-editor-main h-11 flex items-center justify-between px-3 border-b border-black/20 relative">
         <div class="flex items-center space-x-1">
-            <!-- Planeta -->
-            <div class="p-2 icon-btn rounded flex items-center text-gray-400">
+            <!-- Globo / Multi-Instância -->
+            <div onclick="toggleInstanceModal()" class="p-2 icon-btn rounded flex items-center text-gray-400 relative">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <circle cx="12" cy="12" r="8"></circle>
                     <path d="M2 12c0 2 10 2 10 2s10 0 10-2-10-2-10-2-10 0-10 2z"></path>
@@ -101,7 +77,6 @@
                 <span class="text-[8px] ml-1 opacity-50">▼</span>
             </div>
 
-            <!-- Plug -->
             <div onclick="attachProcess()" class="p-2 icon-btn rounded text-gray-400 transform rotate-45">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 13V7a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v6"></path>
@@ -111,156 +86,151 @@
             </div>
         </div>
 
-        <!-- Play Button -->
         <div onclick="executeScript()" class="p-2 icon-btn rounded text-gray-400 hover:text-green-500">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"></path>
-            </svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
         </div>
     </div>
 
-    <!-- Monaco Editor Container -->
+    <!-- Modal Multi-Instância -->
+    <div id="instance-modal" class="p-2 text-xs">
+        <div class="text-gray-500 mb-2 border-b border-white/10 pb-1 flex justify-between">
+            <span>Instâncias</span>
+            <button onclick="refreshInstances()" class="hover:text-white">↻</button>
+        </div>
+        <div id="pid-list" class="space-y-1 max-h-40 overflow-y-auto">
+            <!-- Mock/PIDs serão injetados aqui -->
+            <div class="flex items-center space-x-2 p-1 hover:bg-white/5 rounded">
+                <input type="checkbox" checked class="accent-blue-500">
+                <span>PID: 1234 (Roblox)</span>
+            </div>
+        </div>
+    </div>
+
     <main class="flex-grow relative overflow-hidden bg-editor-main">
         <div id="container"></div>
     </main>
 
     <script>
         let editor;
-        const defaultScript = `-- krnl ui by azurion\nprint("made by azurion")`;
+        const defaultScript = `-- krnl ui mod\nprint("running on multi-instances")`;
+        let tabs = [{ id: 1, name: 'Untitled', content: defaultScript }];
+        let activeTabId = 1;
         
-        let tabs = JSON.parse(localStorage.getItem('tabs')) || [
-            { id: 1, name: 'Untitled', content: defaultScript }
+        // Mock de instâncias encontradas (no mundo real, o C# enviaria isso)
+        let instances = [
+            { pid: 1024, name: "Roblox Client", selected: true },
+            { pid: 2048, name: "Roblox Client", selected: true }
         ];
-        let activeTabId = parseInt(localStorage.getItem('activeTabId')) || 1;
 
-        // --- INICIALIZAÇÃO DO MONACO ---
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
         require(['vs/editor/editor.main'], function() {
-            // Registrar tema customizado para garantir fundo 100% igual
             monaco.editor.defineTheme('krnlTheme', {
-                base: 'vs-dark',
-                inherit: true,
-                rules: [],
-                colors: {
-                    'editor.background': '#1a1a1a',
-                    'editor.lineHighlightBackground': '#252526',
-                    'editorLineNumber.foreground': '#858585',
-                    'editorCursor.foreground': '#ffffff'
-                }
+                base: 'vs-dark', inherit: true, rules: [],
+                colors: { 'editor.background': '#1a1a1a', 'editor.lineHighlightBackground': '#252526' }
             });
-
             editor = monaco.editor.create(document.getElementById('container'), {
-                value: getActiveTab().content,
-                language: 'lua',
-                theme: 'krnlTheme',
-                automaticLayout: true,
-                fontFamily: 'Consolas, "Courier New", monospace',
-                fontSize: 14,
-                lineNumbers: 'on',
-                roundedSelection: true,
-                scrollBeyondLastLine: false,
-                readOnly: false,
-                minimap: { enabled: false },
-                scrollbar: {
-                    vertical: 'visible',
-                    horizontal: 'visible',
-                    useShadows: false,
-                    verticalHasArrows: false,
-                    horizontalHasArrows: false,
-                    verticalScrollbarSize: 10,
-                    horizontalScrollbarSize: 10
-                }
+                value: tabs[0].content, language: 'lua', theme: 'krnlTheme', automaticLayout: true, minimap: { enabled: false }
             });
-
-            // Monitorar mudanças no texto
-            editor.onDidChangeModelContent(() => {
-                const activeTab = getActiveTab();
-                if (activeTab) {
-                    activeTab.content = editor.getValue();
-                    saveState();
-                }
-            });
-
             renderTabs();
+            renderPids();
         });
 
-        // --- FUNÇÕES DE ABA ---
-        function getActiveTab() {
-            return tabs.find(t => t.id === activeTabId) || tabs[0];
+        function toggleInstanceModal() {
+            const m = document.getElementById('instance-modal');
+            m.style.display = m.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function renderPids() {
+            const list = document.getElementById('pid-list');
+            list.innerHTML = instances.map(inst => `
+                <div class="flex items-center justify-between p-1 hover:bg-white/5 rounded">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" ${inst.selected ? 'checked' : ''} 
+                               onchange="togglePid(${inst.pid})" class="accent-blue-500 cursor-pointer">
+                        <span class="text-gray-300">PID: ${inst.pid}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function togglePid(pid) {
+            const inst = instances.find(i => i.pid === pid);
+            if(inst) inst.selected = !inst.selected;
+        }
+
+        function refreshInstances() {
+            // Aqui você poderia pedir ao C# para atualizar a lista de processos
+            // Por enquanto, apenas simulamos
+            console.log("Refreshing PIDs...");
+        }
+
+        function windowAction(action) {
+            window.chrome.webview.postMessage({ action: action });
+        }
+
+        function checkDrag(e) {
+            // Se clicar no header (fora dos botões), envia comando de drag
+            if (e.target.tagName === 'HEADER' || e.target.parentElement?.tagName === 'HEADER') {
+                window.chrome.webview.postMessage({ action: 'drag' });
+            }
+        }
+
+        function attachProcess() {
+            // Envia comando de attach silencioso
+            const selectedPids = instances.filter(i => i.selected).map(i => i.pid);
+            if (selectedPids.length === 0) {
+                window.chrome.webview.postMessage({ action: 'attach' }); // Todos
+            } else {
+                selectedPids.forEach(pid => {
+                    window.chrome.webview.postMessage({ action: 'attach', data: pid.toString() });
+                });
+            }
+        }
+
+        function executeScript() {
+            const code = editor.getValue();
+            const selectedPids = instances.filter(i => i.selected).map(i => i.pid);
+            window.chrome.webview.postMessage({ 
+                action: 'execute', 
+                script: code, 
+                selectedPids: selectedPids 
+            });
+        }
+
+        function addNewTab() {
+            const id = Date.now();
+            tabs.push({ id, name: 'Untitled', content: defaultScript });
+            activeTabId = id;
+            editor.setValue(defaultScript);
+            renderTabs();
         }
 
         function renderTabs() {
             const container = document.getElementById('tabs-container');
-            container.innerHTML = '';
-            
-            tabs.forEach(tab => {
-                const isActive = tab.id === activeTabId;
-                const tabEl = document.createElement('div');
-                tabEl.className = `tab h-full flex items-center px-4 text-xs cursor-pointer border-r border-black/20 ${isActive ? 'bg-tab-active border-accent text-white' : 'bg-tab-inactive text-gray-500 hover:bg-[#323233]'}`;
-                tabEl.innerHTML = `
-                    <span class="truncate pointer-events-none">${tab.name}</span>
-                    <span onclick="closeTab(event, ${tab.id})" class="ml-4 hover:text-white transition-colors">✕</span>
-                `;
-                tabEl.onclick = () => switchTab(tab.id);
-                container.appendChild(tabEl);
-            });
+            container.innerHTML = tabs.map(t => `
+                <div onclick="switchTab(${t.id})" class="tab h-full flex items-center px-4 text-xs cursor-pointer border-r border-black/20 ${t.id === activeTabId ? 'bg-tab-active border-accent text-white' : 'bg-tab-inactive text-gray-500'}">
+                    <span class="truncate pointer-events-none">${t.name}</span>
+                </div>
+            `).join('');
         }
 
         function switchTab(id) {
+            const tab = tabs.find(t => t.id === activeTabId);
+            if(tab) tab.content = editor.getValue();
             activeTabId = id;
-            const tab = getActiveTab();
-            if (editor && tab) {
-                editor.setValue(tab.content);
-            }
+            const next = tabs.find(t => t.id === id);
+            editor.setValue(next.content);
             renderTabs();
-            saveState();
         }
 
-        function addNewTab() {
-            const newId = Date.now();
-            tabs.push({ id: newId, name: 'Untitled', content: defaultScript });
-            switchTab(newId);
-        }
-
-        function closeTab(e, id) {
-            e.stopPropagation();
-            if (tabs.length === 1) {
-                tabs[0].content = defaultScript;
-                editor.setValue(defaultScript);
-                saveState();
-                return;
+        window.addEventListener('resize', () => editor && editor.layout());
+        
+        // Fecha o modal ao clicar fora
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('instance-modal');
+            if (!modal.contains(e.target) && !e.target.closest('.icon-btn')) {
+                modal.style.display = 'none';
             }
-            tabs = tabs.filter(t => t.id !== id);
-            if (activeTabId === id) activeTabId = tabs[0].id;
-            switchTab(activeTabId);
-        }
-
-        function saveState() {
-            localStorage.setItem('tabs', JSON.stringify(tabs));
-            localStorage.setItem('activeTabId', activeTabId);
-        }
-
-        // --- INTEGRAÇÃO C# (WebView2) ---
-        function attachProcess() {
-            if (window.chrome && window.chrome.webview) {
-                window.chrome.webview.postMessage({ action: 'attach' });
-            }
-        }
-
-        window.executeScript = function() {
-            const code = editor.getValue();
-            if (window.chrome && window.chrome.webview) {
-                window.chrome.webview.postMessage({ action: 'execute', data: code });
-            }
-        };
-
-        // Funções Globais expostas para o C#
-        window.GetCode = () => editor.getValue();
-        window.SetCode = (code) => editor.setValue(code);
-        window.ClearCode = () => editor.setValue("");
-
-        window.addEventListener('resize', () => {
-            if (editor) editor.layout();
         });
     </script>
 </body>
