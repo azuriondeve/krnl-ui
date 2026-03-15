@@ -66,6 +66,7 @@
             flex: 1;
             overflow: hidden;
             height: 100%;
+            position: relative;
         }
 
         #tabs-container {
@@ -74,12 +75,10 @@
             overflow-x: auto;
             overflow-y: hidden;
             scroll-behavior: smooth;
-            scrollbar-width: thin;
-            scrollbar-color: #333 transparent;
+            scrollbar-width: none; /* Firefox */
         }
         
-        #tabs-container::-webkit-scrollbar { height: 3px; }
-        #tabs-container::-webkit-scrollbar-thumb { background: #333; }
+        #tabs-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
         .tab-rename-input {
             background: rgba(0,0,0,0.2);
@@ -115,12 +114,10 @@
             z-index: 60;
             border-right: 1px solid rgba(255,255,255,0.05);
             box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-            
-            /* Animation Properties */
             transform: translateX(-100%);
             opacity: 0;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
-            display: flex; /* Always flex but hidden by transform */
+            display: flex;
             pointer-events: none;
         }
 
@@ -142,11 +139,10 @@
         .nav-item:hover {
             background: rgba(255,255,255,0.05);
             color: white;
-            padding-left: 24px; /* Pequeno efeito de deslize no hover */
+            padding-left: 24px;
         }
         .nav-item svg { width: 18px; height: 18px; }
 
-        /* Hub Cards */
         .script-card {
             background: #252526;
             border-radius: 6px;
@@ -239,6 +235,12 @@
             background: inherit;
             z-index: 10;
         }
+
+        /* Garantir que o botão + não suma */
+        #add-tab-btn {
+            z-index: 20;
+            background-color: #252526;
+        }
     </style>
 </head>
 <body onmousedown="checkDrag(event)">
@@ -248,7 +250,7 @@
     <div class="resizer left" onmousedown="handleResize(event, 'left')"></div>
     <div class="resizer right" onmousedown="handleResize(event, 'right')"></div>
 
-    <!-- Header (Drag Area) -->
+    <!-- Header -->
     <header id="drag-header" class="bg-header h-10 flex items-center justify-between select-none border-b border-black/40 overflow-hidden">
         <div class="flex items-center h-full overflow-hidden flex-1 min-w-0">
             <div onclick="toggleSidebar()" class="px-3 h-full flex items-center icon-btn group" title="Menu">
@@ -263,7 +265,7 @@
                 <div id="tabs-container"></div>
             </div>
 
-            <div onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5 flex-shrink-0 transition-colors">
+            <div id="add-tab-btn" onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5 flex-shrink-0 transition-colors border-l border-black/10">
                 <span class="text-xl font-light">+</span>
             </div>
         </div>
@@ -299,7 +301,7 @@
         </div>
     </div>
 
-    <!-- Script Hub View -->
+    <!-- Script Hub -->
     <div id="script-hub">
         <div class="p-3 border-b border-white/5 flex items-center space-x-2">
             <div class="relative flex-1">
@@ -313,9 +315,7 @@
                 Trending
             </button>
         </div>
-        <div id="hub-content" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            <!-- Scripts -->
-        </div>
+        <div id="hub-content" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"></div>
     </div>
 
     <!-- Toolbar -->
@@ -393,12 +393,10 @@
             renderTabs();
         });
 
-        // Navigation & Sidebar Logic
+        // Navigation
         function toggleSidebar() {
             const sidebar = document.getElementById('navigation-sidebar');
             sidebar.classList.toggle('active');
-            
-            // Hide hub if sidebar opens to avoid clutter
             if(sidebar.classList.contains('active')) {
                 document.getElementById('script-hub').style.display = 'none';
             }
@@ -421,7 +419,7 @@
             }
         }
 
-        // Script Hub Implementation
+        // Script Hub
         async function fetchTrending() {
             showLoading(true);
             try {
@@ -457,40 +455,21 @@
         function renderHubScripts(scripts) {
             const content = document.getElementById('hub-content');
             content.innerHTML = '';
-            
             scripts.forEach(s => {
                 const gameName = s.game?.name || 'Universal';
                 let imgUrl = 'https://via.placeholder.com/300x150/252526/ffffff?text=No+Image';
-                
-                if (s.game?.image) {
-                    imgUrl = s.game.image.startsWith('http') ? s.game.image : `https://scriptblox.com${s.game.image}`;
-                } else if (s.image) {
-                    imgUrl = s.image.startsWith('http') ? s.image : `https://scriptblox.com${s.image}`;
-                }
+                if (s.game?.image) imgUrl = s.game.image.startsWith('http') ? s.game.image : `https://scriptblox.com${s.game.image}`;
+                else if (s.image) imgUrl = s.image.startsWith('http') ? s.image : `https://scriptblox.com${s.image}`;
 
                 const card = document.createElement('div');
                 card.className = 'script-card';
                 card.innerHTML = `
-                    <div class="card-image-container">
-                        <img src="${imgUrl}" 
-                            class="transition-opacity duration-300 opacity-0" 
-                            onload="this.classList.remove('opacity-0')"
-                            onerror="this.src='https://via.placeholder.com/300x150/252526/ffffff?text=Image+Error'">
-                    </div>
+                    <div class="card-image-container"><img src="${imgUrl}" class="transition-opacity opacity-0" onload="this.classList.remove('opacity-0')"></div>
                     <div class="card-content">
-                        <div>
-                            <h3 class="card-title" title="${s.title}">${s.title}</h3>
-                            <p class="card-subtitle">${gameName}</p>
-                        </div>
+                        <div><h3 class="card-title">${s.title}</h3><p class="card-subtitle">${gameName}</p></div>
                         <div class="card-actions">
-                            <button onclick="loadToTab('${btoa(unescape(encodeURIComponent(s.script)))}', '${s.title.replace(/'/g, "")}')" 
-                                class="card-btn bg-white/5 hover:bg-white/10 text-white border border-white/5">
-                                + TAB
-                            </button>
-                            <button onclick="executeRaw(decodeURIComponent(escape(atob('${btoa(unescape(encodeURIComponent(s.script)))}'))))" 
-                                class="card-btn bg-white hover:bg-gray-200 text-black">
-                                RUN
-                            </button>
+                            <button onclick="loadToTab('${btoa(unescape(encodeURIComponent(s.script)))}', '${s.title.replace(/'/g, "")}')" class="card-btn bg-white/5 hover:bg-white/10 text-white">+ TAB</button>
+                            <button onclick="executeRaw(decodeURIComponent(escape(atob('${btoa(unescape(encodeURIComponent(s.script)))}'))))" class="card-btn bg-white hover:bg-gray-200 text-black">RUN</button>
                         </div>
                     </div>
                 `;
@@ -509,22 +488,16 @@
             document.getElementById('script-hub').style.display = 'none';
         }
 
-        // Bridge functions (C#)
+        // Bridge
         function executeScript() {
             const code = editor.getValue();
-            if (window.chrome?.webview) {
-                window.chrome.webview.postMessage({ action: 'execute', script: code });
-            } else {
-                console.log("C# Bridge: Execute ->", code);
-            }
+            if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'execute', script: code });
+            else console.log("Execute ->", code);
         }
 
         function executeRaw(code) {
-            if (window.chrome?.webview) {
-                window.chrome.webview.postMessage({ action: 'execute', script: code });
-            } else {
-                console.log("C# Bridge: Direct Execute ->", code);
-            }
+            if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'execute', script: code });
+            else console.log("Direct Execute ->", code);
         }
 
         function windowAction(action) {
@@ -535,24 +508,15 @@
             if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'resize', direction: direction });
         }
 
-        // Logic to trigger Drag in C#
         function checkDrag(e) {
-            // Prevent dragging if clicking interactive elements
-            if (e.target.closest('.icon-btn') || 
-                e.target.closest('.tab') || 
-                e.target.closest('.resizer') || 
-                e.target.closest('#script-hub') || 
-                e.target.closest('#navigation-sidebar') ||
-                e.target.closest('.window-controls')) return;
+            if (e.target.closest('.icon-btn') || e.target.closest('.tab') || e.target.closest('.resizer') || 
+                e.target.closest('#script-hub') || e.target.closest('#navigation-sidebar') ||
+                e.target.closest('.window-controls') || e.target.closest('#add-tab-btn')) return;
 
-            // Only drag if clicking on the header or empty spaces of the header
             const header = document.getElementById('drag-header');
             if (header.contains(e.target)) {
-                if (window.chrome?.webview) {
-                    window.chrome.webview.postMessage({ action: 'drag' });
-                } else {
-                    console.log("C# Bridge: Drag Window Triggered");
-                }
+                if (window.chrome?.webview) window.chrome.webview.postMessage({ action: 'drag' });
+                else console.log("Drag Triggered");
             }
         }
 
@@ -569,12 +533,13 @@
 
         function addNewTab() {
             const id = Date.now();
-            tabs.push({ id, name: `Untitled ${tabs.length + 1}`, content: defaultScript });
-            activeTabId = id;
-            editor.setValue(defaultScript);
-            renderTabs();
-            saveToLocal();
-            setTimeout(() => { tabsContainer.scrollLeft = tabsContainer.scrollWidth; }, 50);
+            const newName = `Untitled ${tabs.length + 1}`;
+            tabs.push({ id, name: newName, content: defaultScript });
+            switchTab(id);
+            // Pequeno delay para garantir que o DOM renderizou a nova aba antes de scrollar
+            setTimeout(() => {
+                tabsContainer.scrollLeft = tabsContainer.scrollWidth;
+            }, 50);
         }
 
         function renderTabs() {
@@ -600,17 +565,20 @@
                 tabDiv.appendChild(closeBtn);
                 tabsContainer.appendChild(tabDiv);
                 
-                if (isSelected) tabDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                if (isSelected) {
+                    tabDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
             });
         }
 
         function switchTab(id) {
-            if (activeTabId === id) return;
-            const oldTab = tabs.find(t => t.id === activeTabId);
-            if(oldTab) oldTab.content = editor.getValue();
+            const currentTab = tabs.find(t => t.id === activeTabId);
+            if(currentTab) currentTab.content = editor.getValue();
+            
             activeTabId = id;
-            const next = tabs.find(t => t.id === id);
-            editor.setValue(next.content);
+            const targetTab = tabs.find(t => t.id === id);
+            editor.setValue(targetTab.content);
+            
             renderTabs();
             saveToLocal();
         }
@@ -620,8 +588,9 @@
             const index = tabs.findIndex(t => t.id === id);
             tabs = tabs.filter(t => t.id !== id);
             if (activeTabId === id) {
-                activeTabId = tabs[Math.max(0, index - 1)].id;
-                editor.setValue(tabs.find(t => t.id === activeTabId).content);
+                const nextTab = tabs[Math.max(0, index - 1)];
+                activeTabId = nextTab.id;
+                editor.setValue(nextTab.content);
             }
             renderTabs();
             saveToLocal();
@@ -636,6 +605,7 @@
             span.replaceWith(input);
             input.focus();
             input.select();
+            
             const finishRename = () => {
                 const newName = input.value.trim() || currentName;
                 const tab = tabs.find(t => t.id === id);
@@ -643,6 +613,7 @@
                 renderTabs();
                 saveToLocal();
             };
+            
             input.onblur = finishRename;
             input.onkeydown = (e) => { if (e.key === 'Enter') finishRename(); };
         }
