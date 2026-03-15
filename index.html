@@ -17,6 +17,7 @@
             flex-direction: column; 
             position: relative;
             min-width: 300px; 
+            user-select: none;
         }
         
         .bg-editor-main { background-color: #1a1a1a; }
@@ -29,7 +30,7 @@
         }
 
         /* Custom Scrollbars */
-        ::-webkit-scrollbar { height: 3px; width: 5px; }
+        ::-webkit-scrollbar { height: 4px; width: 4px; }
         ::-webkit-scrollbar-track { background: #1a1a1a; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #007acc; }
@@ -49,10 +50,6 @@
             opacity: 1; 
             background: rgba(255,255,255,0.08); 
         }
-        .icon-btn:active {
-            color: #007acc !important;
-            background: rgba(0, 122, 204, 0.1);
-        }
 
         .tab { 
             min-width: 100px; 
@@ -63,15 +60,32 @@
             transition: background 0.2s ease;
         }
 
+        /* Tabs Container with Scroll */
+        #tabs-outer {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            overflow: hidden;
+            height: 100%;
+        }
+
         #tabs-container {
             display: flex;
             height: 100%;
             overflow-x: auto;
             overflow-y: hidden;
             scroll-behavior: smooth;
-            scrollbar-width: none;
+            /* Thin scrollbar for tabs */
+            scrollbar-width: thin;
+            scrollbar-color: #333 transparent;
         }
-        #tabs-container::-webkit-scrollbar { display: none; }
+        
+        #tabs-container::-webkit-scrollbar {
+            height: 3px;
+        }
+        #tabs-container::-webkit-scrollbar-thumb {
+            background: #333;
+        }
 
         .tab-rename-input {
             background: rgba(0,0,0,0.2);
@@ -99,16 +113,78 @@
 
         .script-card {
             background: #252526;
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
             transition: transform 0.2s, border-color 0.2s;
             border: 1px solid rgba(255,255,255,0.05);
             display: flex;
             flex-direction: column;
+            min-height: 180px;
         }
         .script-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-2px);
             border-color: #007acc;
+        }
+
+        .card-image-container {
+            position: relative;
+            height: 90px;
+            width: 100%;
+            background: #121212;
+            flex-shrink: 0;
+        }
+
+        .card-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            line-height: 1.2;
+            margin-bottom: 2px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-subtitle {
+            font-size: 9px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            margin-bottom: 8px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .card-btn {
+            flex: 1;
+            padding: 6px 2px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .loading-spinner {
@@ -121,7 +197,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Resize Handles */
         .resizer { position: absolute; z-index: 9999; }
         .resizer.right { top: 0; right: 0; width: 6px; height: 100%; cursor: e-resize; }
         .resizer.left { top: 0; left: 0; width: 6px; height: 100%; cursor: w-resize; }
@@ -154,7 +229,9 @@
                 </svg>
             </div>
             
-            <div id="tabs-container"></div>
+            <div id="tabs-outer">
+                <div id="tabs-container"></div>
+            </div>
 
             <div onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5 flex-shrink-0 transition-colors">
                 <span class="text-xl font-light">+</span>
@@ -188,15 +265,14 @@
                 Trending
             </button>
         </div>
-        <div id="hub-content" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <!-- Scripts here -->
+        <div id="hub-content" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            <!-- Scripts -->
         </div>
     </div>
 
     <!-- Toolbar -->
     <div class="bg-editor-main h-12 flex items-center justify-between px-4 border-b border-black/20 relative flex-shrink-0">
         <div class="flex items-center space-x-2">
-            <!-- Attach Button -->
             <div onclick="attachProcess()" class="p-2 icon-btn rounded text-gray-400 hover:text-white" title="Attach">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m18 2 4 4"></path>
@@ -209,7 +285,6 @@
             </div>
         </div>
 
-        <!-- Execute Button (Original Position, Adjusted Color) -->
         <div onclick="executeScript()" class="p-2 icon-btn rounded text-gray-400 hover:text-white hover:scale-110 active:scale-95" title="Execute">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
         </div>
@@ -220,6 +295,17 @@
     </main>
 
     <script>
+        // Security Bloquer
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            // F12
+            if (e.keyCode === 123) { e.preventDefault(); return false; }
+            // Ctrl+Shift+I, J, C
+            if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
+            // Ctrl+U (View Source)
+            if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
+        });
+
         let editor;
         const defaultScript = `-- krnl executor`;
         const BASE_URL = 'https://scriptblox.com/api/';
@@ -260,6 +346,13 @@
             });
 
             renderTabs();
+        });
+
+        // Horizontal Scroll for Tabs
+        const tabsContainer = document.getElementById('tabs-container');
+        tabsContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            tabsContainer.scrollLeft += e.deltaY;
         });
 
         function executeScript() {
@@ -327,7 +420,6 @@
                 const gameName = s.game?.name || 'Universal';
                 let imgUrl = 'https://via.placeholder.com/300x150/252526/ffffff?text=No+Image';
                 
-                // Logic to fix image paths from ScriptBlox API
                 if (s.game?.image) {
                     imgUrl = s.game.image.startsWith('http') ? s.game.image : `https://scriptblox.com${s.game.image}`;
                 } else if (s.image) {
@@ -335,24 +427,27 @@
                 }
 
                 const card = document.createElement('div');
-                card.className = 'script-card flex flex-col';
+                card.className = 'script-card';
                 card.innerHTML = `
-                    <div class="relative h-28 w-full overflow-hidden bg-[#121212]">
-                        <img src="${imgUrl}" class="w-full h-full object-cover transition-opacity duration-300 opacity-0" 
+                    <div class="card-image-container">
+                        <img src="${imgUrl}" 
+                            class="transition-opacity duration-300 opacity-0" 
                             onload="this.classList.remove('opacity-0')"
                             onerror="this.src='https://via.placeholder.com/300x150/252526/ffffff?text=Image+Error'">
                     </div>
-                    <div class="p-3 flex-1 flex flex-col">
-                        <h3 class="text-xs font-bold truncate text-white" title="${s.title}">${s.title}</h3>
-                        <p class="text-[9px] text-gray-400 mb-2 truncate uppercase">${gameName}</p>
-                        <div class="mt-auto flex space-x-2">
+                    <div class="card-content">
+                        <div>
+                            <h3 class="card-title" title="${s.title}">${s.title}</h3>
+                            <p class="card-subtitle">${gameName}</p>
+                        </div>
+                        <div class="card-actions">
                             <button onclick="loadToTab('${btoa(unescape(encodeURIComponent(s.script)))}', '${s.title.replace(/'/g, "")}')" 
-                                class="flex-1 bg-white/5 hover:bg-white/10 text-[9px] py-1 rounded transition-all text-white border border-white/5 uppercase font-medium">
+                                class="card-btn bg-white/5 hover:bg-white/10 text-white border border-white/5">
                                 + TAB
                             </button>
                             <button onclick="executeRaw(decodeURIComponent(escape(atob('${btoa(unescape(encodeURIComponent(s.script)))}'))))" 
-                                class="flex-1 bg-white hover:bg-gray-200 text-black font-bold text-[9px] py-1 rounded transition-all uppercase">
-                                EXECUTE
+                                class="card-btn bg-white hover:bg-gray-200 text-black">
+                                RUN
                             </button>
                         </div>
                     </div>
@@ -405,14 +500,12 @@
             saveToLocal();
             
             setTimeout(() => {
-                const container = document.getElementById('tabs-container');
-                container.scrollLeft = container.scrollWidth;
+                tabsContainer.scrollLeft = tabsContainer.scrollWidth;
             }, 50);
         }
 
         function renderTabs() {
-            const container = document.getElementById('tabs-container');
-            container.innerHTML = '';
+            tabsContainer.innerHTML = '';
             
             tabs.forEach(t => {
                 const isSelected = t.id === activeTabId;
@@ -440,7 +533,11 @@
 
                 tabDiv.appendChild(span);
                 tabDiv.appendChild(closeBtn);
-                container.appendChild(tabDiv);
+                tabsContainer.appendChild(tabDiv);
+                
+                if (isSelected) {
+                    tabDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
             });
         }
 
