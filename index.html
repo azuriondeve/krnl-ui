@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,7 +28,7 @@
             border-top: 2px solid #007acc; 
         }
 
-        /* Scrollbars customizadas */
+        /* Custom Scrollbars */
         ::-webkit-scrollbar { height: 3px; width: 5px; }
         ::-webkit-scrollbar-track { background: #1a1a1a; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
@@ -102,7 +102,9 @@
             border-radius: 8px;
             overflow: hidden;
             transition: transform 0.2s, border-color 0.2s;
-            border: 1px solid transparent;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
         }
         .script-card:hover {
             transform: translateY(-4px);
@@ -176,24 +178,25 @@
     <div id="script-hub">
         <div class="p-3 border-b border-white/5 flex items-center space-x-2">
             <div class="relative flex-1">
-                <input id="hub-search" type="text" placeholder="Pesquisar..." 
+                <input id="hub-search" type="text" placeholder="Search scripts..." 
                     class="w-full bg-[#2d2d2d] border border-white/10 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition-all">
                 <div id="hub-loading" class="absolute right-3 top-2 hidden">
                     <div class="loading-spinner" style="width: 16px; height: 16px;"></div>
                 </div>
             </div>
             <button onclick="fetchTrending()" class="bg-[#2d2d2d] hover:bg-[#3d3d3d] px-3 py-1.5 rounded text-[10px] font-medium uppercase transition-colors">
-                Populares
+                Trending
             </button>
         </div>
-        <div id="hub-content" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Scripts aqui -->
+        <div id="hub-content" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- Scripts here -->
         </div>
     </div>
 
     <!-- Toolbar -->
     <div class="bg-editor-main h-12 flex items-center justify-between px-4 border-b border-black/20 relative flex-shrink-0">
         <div class="flex items-center space-x-2">
+            <!-- Attach Button -->
             <div onclick="attachProcess()" class="p-2 icon-btn rounded text-gray-400 hover:text-white" title="Attach">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m18 2 4 4"></path>
@@ -206,7 +209,8 @@
             </div>
         </div>
 
-        <div onclick="executeScript()" class="p-2 icon-btn rounded text-white hover:scale-110 active:scale-95" title="Execute">
+        <!-- Execute Button (Original Position, Adjusted Color) -->
+        <div onclick="executeScript()" class="p-2 icon-btn rounded text-gray-400 hover:text-white hover:scale-110 active:scale-95" title="Execute">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
         </div>
     </div>
@@ -217,7 +221,7 @@
 
     <script>
         let editor;
-        const defaultScript = `-- krnl`;
+        const defaultScript = `-- krnl executor`;
         const BASE_URL = 'https://scriptblox.com/api/';
         
         let tabs = JSON.parse(localStorage.getItem('krnl_tabs')) || [
@@ -322,8 +326,12 @@
             scripts.forEach(s => {
                 const gameName = s.game?.name || 'Universal';
                 let imgUrl = 'https://via.placeholder.com/300x150/252526/ffffff?text=No+Image';
+                
+                // Logic to fix image paths from ScriptBlox API
                 if (s.game?.image) {
                     imgUrl = s.game.image.startsWith('http') ? s.game.image : `https://scriptblox.com${s.game.image}`;
+                } else if (s.image) {
+                    imgUrl = s.image.startsWith('http') ? s.image : `https://scriptblox.com${s.image}`;
                 }
 
                 const card = document.createElement('div');
@@ -336,15 +344,15 @@
                     </div>
                     <div class="p-3 flex-1 flex flex-col">
                         <h3 class="text-xs font-bold truncate text-white" title="${s.title}">${s.title}</h3>
-                        <p class="text-[9px] text-gray-400 mb-2 truncate">${gameName}</p>
+                        <p class="text-[9px] text-gray-400 mb-2 truncate uppercase">${gameName}</p>
                         <div class="mt-auto flex space-x-2">
                             <button onclick="loadToTab('${btoa(unescape(encodeURIComponent(s.script)))}', '${s.title.replace(/'/g, "")}')" 
-                                class="flex-1 bg-white/5 hover:bg-white/10 text-[9px] py-1 rounded transition-all text-white border border-white/5">
+                                class="flex-1 bg-white/5 hover:bg-white/10 text-[9px] py-1 rounded transition-all text-white border border-white/5 uppercase font-medium">
                                 + TAB
                             </button>
                             <button onclick="executeRaw(decodeURIComponent(escape(atob('${btoa(unescape(encodeURIComponent(s.script)))}'))))" 
-                                class="flex-1 bg-white hover:bg-gray-200 text-black font-bold text-[9px] py-1 rounded transition-all">
-                                EXECUTAR
+                                class="flex-1 bg-white hover:bg-gray-200 text-black font-bold text-[9px] py-1 rounded transition-all uppercase">
+                                EXECUTE
                             </button>
                         </div>
                     </div>
