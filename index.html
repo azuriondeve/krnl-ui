@@ -217,17 +217,18 @@
         });
 
         function translateScript(input) {
-            let finalScript = input.trim();
+            let finalScript = input;
         
-            // Atalhos locais (_G.IY, _G.Dex, etc)
-            if (shortcutMap[finalScript]) {
-                return shortcutMap[finalScript];
+            // atalhos locais
+            for (const key in shortcutMap) {
+                const value = shortcutMap[key];
+                finalScript = finalScript.replaceAll(key, value);
             }
         
-            // Atalhos carregados do JSON
+            // atalhos do JSON
             shortcuts.forEach(item => {
-                if (finalScript === item.textbox) {
-                    finalScript = item.load;
+                if (item.textbox && item.load) {
+                    finalScript = finalScript.replaceAll(item.textbox, item.load);
                 }
             });
         
