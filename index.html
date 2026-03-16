@@ -29,7 +29,6 @@
             border-top: 2px solid #007acc; 
         }
 
-        /* Custom Scrollbars */
         ::-webkit-scrollbar { height: 4px; width: 4px; }
         ::-webkit-scrollbar-track { background: #1a1a1a; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
@@ -52,8 +51,8 @@
         }
 
         .tab { 
-            min-width: 100px; 
-            max-width: 180px; 
+            min-width: 80px; 
+            max-width: 160px; 
             flex-shrink: 0; 
             user-select: none; 
             position: relative;
@@ -63,10 +62,8 @@
         #tabs-outer {
             display: flex;
             align-items: center;
-            flex: 1;
             overflow: hidden;
             height: 100%;
-            position: relative;
         }
 
         #tabs-container {
@@ -75,10 +72,10 @@
             overflow-x: auto;
             overflow-y: hidden;
             scroll-behavior: smooth;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none; 
         }
         
-        #tabs-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        #tabs-container::-webkit-scrollbar { display: none; }
 
         .tab-rename-input {
             background: rgba(0,0,0,0.2);
@@ -232,10 +229,8 @@
             display: flex;
             height: 100%;
             flex-shrink: 0;
-            background: inherit;
-            z-index: 10;
+            margin-left: auto; /* Empurra para a direita */
         }
-
         /* Garantir que o botão + não suma */
         #add-tab-btn {
             z-index: 20;
@@ -261,14 +256,15 @@
                 </svg>
             </div>
             
-            <div id="tabs-outer">
-                <div id="tabs-container"></div>
-            </div>
-
-            <div id="add-tab-btn" onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5 flex-shrink-0 transition-colors border-l border-black/10">
-                <span class="text-xl font-light">+</span>
-            </div>
+        <div id="tabs-outer" class="flex-shrink min-w-0">
+            <div id="tabs-container"></div>
         </div>
+
+        <!-- 3. Botão + logo após as abas -->
+        <div id="add-tab-btn" onclick="addNewTab()" class="px-3 h-full flex items-center text-gray-500 hover:text-white cursor-pointer hover:bg-white/5 flex-shrink-0 transition-colors">
+            <span class="text-xl font-light">+</span>
+        </div>
+
 
         <div class="window-controls">
             <div onclick="windowAction('minimize')" class="px-4 h-full flex items-center hover:bg-white/5 cursor-pointer text-gray-400 transition-colors">
