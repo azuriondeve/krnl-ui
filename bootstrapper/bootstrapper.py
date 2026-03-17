@@ -56,6 +56,7 @@ def download(url, filename):
     with requests.get(url, stream=True) as r:
         total = int(r.headers.get("content-length", 0))
         downloaded = 0
+        start_time = time.time()
 
         with open(filename, "wb") as f:
             for chunk in r.iter_content(8192):
@@ -63,9 +64,27 @@ def download(url, filename):
                     f.write(chunk)
                     downloaded += len(chunk)
 
-                    if total:
-                        percent = downloaded * 100 / total
-                        print(f"\r[BOOTSTRAPPER] Downloading... {percent:.1f}%", end="")
+                    # MB conversion
+                    downloaded_mb = downloaded / (1024 * 1024)
+                    total_mb = total / (1024 * 1024) if total else 0
+
+                    # speed
+                    elapsed = time.time() - start_time
+                    speed = downloaded / elapsed if elapsed > 0 else 0  # bytes/sec
+
+                    # ETA
+                    if total and speed > 0:
+                        remaining = total - downloaded
+                        eta = remaining / speed
+                    else:
+                        eta = 0
+
+                    eta_str = time.strftime("%M:%S", time.gmtime(eta))
+
+                    print(
+                        f"\r[BOOTSTRAPPER] {downloaded_mb:.2f}/{total_mb:.2f} MB | ETA: {eta_str}",
+                        end=""
+                    )
 
     print("\n[BOOTSTRAPPER] Download complete")
 
