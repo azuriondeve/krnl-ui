@@ -8,7 +8,7 @@
 ![Latest release](https://img.shields.io/github/v/release/azuriondeve/krnl-ui)
 ![Downloads](https://img.shields.io/github/downloads/azuriondeve/krnl-ui/total)
 ![Windows](https://img.shields.io/badge/platform-Windows-blue)
-![Made with](https://img.shields.io/badge/made%20with-Python-yellow)
+![Made with](https://img.shields.io/badge/made%20with-Tauri-blue?logo=tauri&logoColor=white)
 
 ---
 
