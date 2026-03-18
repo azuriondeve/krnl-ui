@@ -58,13 +58,19 @@
             transform: scale(1.1);
         }
 
-        @keyframes pulse-text {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .faq-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(37, 99, 235, 0.3);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-6">
+<body class="min-h-screen flex flex-col items-center p-6">
 
     <!-- Fundo de Partículas Dinâmicas -->
     <canvas id="canvas-bg"></canvas>
@@ -86,7 +92,7 @@
     </audio>
 
     <!-- Conteúdo Principal -->
-    <main class="max-w-4xl w-full text-center z-10">
+    <main class="max-w-4xl w-full text-center z-10 pt-20">
         
         <!-- Cabeçalho -->
         <div class="mb-12">
@@ -96,7 +102,7 @@
         </div>
 
         <!-- Seção de Download -->
-        <div class="glass-card p-10 md:p-16 mb-16 relative overflow-hidden">
+        <div class="glass-card p-10 md:p-16 mb-12 relative overflow-hidden">
             <div class="relative z-10">
                 <h3 class="text-3xl font-bold mb-4 uppercase tracking-tight">Elevate Your Performance</h3>
                 <p class="text-gray-400 mb-10 max-w-md mx-auto">Experience the most stable and optimized environment for 2026 execution.</p>
@@ -111,8 +117,38 @@
             </div>
         </div>
 
+        <!-- Seção de FAQ -->
+        <div class="w-full text-left mb-20 px-4">
+            <h2 class="text-2xl font-bold mb-8 text-center uppercase tracking-widest text-blue-500">FAQ</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Pergunta 1 -->
+                <div class="faq-item p-6 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-2 text-blue-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                        <h4 class="font-bold uppercase text-xs tracking-wider">Language & Framework</h4>
+                    </div>
+                    <p class="text-gray-300 text-sm">Built using the <span class="text-white font-medium">Tauri API</span> for maximum efficiency and security.</p>
+                </div>
+
+                <!-- Pergunta 2 -->
+                <div class="faq-item p-6 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-2 text-blue-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <h4 class="font-bold uppercase text-xs tracking-wider">Execution Engine</h4>
+                    </div>
+                    <p class="text-gray-300 text-sm">Currently powered by <span class="text-white font-medium">Velocity</span>. We are developing our own engine from scratch for future updates.</p>
+                </div>
+
+            </div>
+        </div>
+
         <!-- Rodapé -->
-        <footer class="text-gray-500 text-sm tracking-wide">
+        <footer class="text-gray-500 text-sm tracking-wide pb-10">
             <p class="mb-6">&copy; 2026 <span class="text-white font-semibold">Azurion Group</span>. All rights reserved.</p>
             <div class="flex justify-center gap-8 opacity-60 hover:opacity-100 transition-opacity">
                 <a href="https://azuriondeve.github.io/krnl-ui/discord.html" target="_blank" class="hover:text-blue-500 transition-colors uppercase font-bold tracking-widest text-xs">Discord Server</a>
